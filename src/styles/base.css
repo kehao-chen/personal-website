@@ -160,6 +160,25 @@ a { color: var(--accent); }
 }
 .prose pre > code { background: none; border: none; padding: 0; }
 
+/* Shiki 的 css-variables 主題把每個 token 的顏色寫成 var(--astro-code-*) 的
+   inline style。變數定義在 <pre> 自己身上（不是 :root），多色相因此在結構上
+   就只可能出現在程式碼區塊裡。
+   css-variables 主題沒有獨立的 class token（entity.name.type 走 token-function），
+   --syntax-class 因此接在 token-link 上：程式碼區塊裡的連結與 metadata。 */
+.prose .astro-code {
+  --astro-code-background: var(--panel);
+  --astro-code-foreground: var(--ink);
+  --astro-code-token-keyword: var(--syntax-keyword);
+  --astro-code-token-function: var(--syntax-function);
+  --astro-code-token-string: var(--syntax-string);
+  --astro-code-token-string-expression: var(--syntax-string);
+  --astro-code-token-constant: var(--syntax-number);
+  --astro-code-token-comment: var(--syntax-comment);
+  --astro-code-token-parameter: var(--syntax-param);
+  --astro-code-token-link: var(--syntax-class);
+  --astro-code-token-punctuation: var(--muted);
+}
+
 /* ============================== 字標 ============================== */
 /* 只在首頁使用。WebGL 啟動時降為透明但保留在無障礙樹中。 */
 .wordmark {
@@ -274,7 +293,8 @@ a { color: var(--accent); }
   margin: 0;
   font-size: 0.62rem;
   letter-spacing: 0.18em;
-  color: var(--dim);
+  /* 這行帶著操作指示，不是裝飾性 chrome：用 --muted，不能用 --dim */
+  color: var(--muted);
   pointer-events: none;
 }
 
@@ -328,8 +348,9 @@ html.seq-pending::after {
   will-change: transform, clip-path, opacity;
 }
 
-/* ClientRouter 預設的淡入淡出會與故障打架，關掉。 */
-@view-transition { navigation: auto; }
+/* ClientRouter 預設的淡入淡出會與故障打架，關掉。
+   （沒有 `@view-transition { navigation: auto }`：ClientRouter 走的是同文件的
+   `document.startViewTransition`，不需要跨文件轉場的 opt-in。） */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
