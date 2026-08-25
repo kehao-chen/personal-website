@@ -38,6 +38,21 @@ const htmlLang = locale === 'zh' ? 'zh-Hant' : 'en';
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    {front && (
+      <script is:inline>
+        (function () {
+          try {
+            var played = sessionStorage.getItem('hh.sequence.played') === '1';
+            var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (!played && !reduced) {
+              document.documentElement.classList.add('seq-pending');
+            }
+          } catch (e) {
+            /* sessionStorage 可能被封鎖；封鎖時不播序列即可 */
+          }
+        })();
+      </script>
+    )}
     <slot name="head" />
   </head>
   <body>

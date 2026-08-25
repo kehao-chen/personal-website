@@ -1,6 +1,7 @@
 ---
 import FrontLayout from '../../layouts/FrontLayout.astro';
 import TerminalWindow from '../../components/TerminalWindow.astro';
+import SiteBackdrop from '../../components/SiteBackdrop.astro';
 ---
 <FrontLayout
   locale="zh"
@@ -9,6 +10,7 @@ import TerminalWindow from '../../components/TerminalWindow.astro';
   path="/about"
   current="about"
 >
+  <SiteBackdrop />
   <main class="page layout-reading">
     <TerminalWindow path="~/about.md" deco="READ-ONLY" footLeft="LINK OK" footItems={['GITHUB · LINKEDIN · RSS']} variant="prose">
       <h1>關於</h1>

@@ -2,6 +2,7 @@
 import FrontLayout from '../../layouts/FrontLayout.astro';
 import TerminalWindow from '../../components/TerminalWindow.astro';
 import Wordmark from '../../components/Wordmark.astro';
+import HeroSequence from '../../components/HeroSequence.astro';
 ---
 <FrontLayout
   locale="zh"
@@ -11,6 +12,7 @@ import Wordmark from '../../components/Wordmark.astro';
   current="home"
 >
   <Wordmark />
+  <HeroSequence locale="zh" />
   <main class="page layout-front">
     <TerminalWindow
       path="guest@happyhacking:~"

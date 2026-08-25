@@ -1,0 +1,51 @@
+---
+// 門面路由（非首頁）的安靜背景。沒有序列、沒有字標。
+---
+<script>
+  import { IDLE_FRAME } from '../lib/sequence/timeline';
+  import type { DitherHandle } from '../lib/dither';
+
+  async function boot(): Promise<void> {
+    // 這條路由沒有入侵序列，不該被 <head> 的同步 inline script 加上的
+    // seq-pending 卡住——那個 class 只該由播序列的頁面自己解除。先解掉，
+    // 避免使用者在全新 session 直接進 /about 或 /writing 時，內容被
+    // 不透明的 #fx 永遠蓋住（探測/初始化 WebGL 期間也一樣）。
+    document.documentElement.classList.remove('seq-pending');
+
+    const canvas = document.getElementById('dither-canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    try {
+      const probe = document.createElement('canvas');
+      if (!(probe.getContext('webgl2') ?? probe.getContext('webgl'))) return;
+    } catch {
+      return;
+    }
+
+    const { createDither } = await import('../lib/dither');
+    const styles = getComputedStyle(document.documentElement);
+    const handle: DitherHandle = createDither(canvas, {
+      ground: styles.getPropertyValue('--ground').trim(),
+      ink: styles.getPropertyValue('--ink').trim(),
+      accent: styles.getPropertyValue('--accent').trim(),
+    });
+    window.__dither = handle;
+
+    // 探測通過但實際建構仍可能失敗：保持安靜背景，不宣告 gl-active
+    if (!handle.active) return;
+
+    document.documentElement.classList.add('gl-active', 'seq-done');
+
+    // 降強度：顆粒與脈衝環減半，場景更淡，字標為 0（字標只屬於首頁）
+    handle.setFrame({
+      ...IDLE_FRAME,
+      grain: 0.01,
+      ring: 0.13,
+      scene: 0.5,
+      wordmark: 0,
+    });
+  }
+
+  void boot();
+</script>

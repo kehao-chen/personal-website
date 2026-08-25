@@ -1,0 +1,131 @@
+---
+import type { Locale } from '../lib/posts';
+import { t } from '../lib/i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+---
+
+<pre id="boot-log" aria-hidden="true"></pre>
+<p id="skip-hint" aria-hidden="true">{t(locale, 'skip.sequence')}</p>
+
+<script>
+  import { frameAt, IDLE_FRAME, TIMELINE, bootLinesAt } from '../lib/sequence/timeline';
+  import type { DitherHandle } from '../lib/dither';
+
+  const SESSION_KEY = 'hh.sequence.played';
+
+  const canvas = document.getElementById('dither-canvas') as HTMLCanvasElement | null;
+  const bootLog = document.getElementById('boot-log');
+  const skipHint = document.getElementById('skip-hint');
+
+  function supportsWebGL(probe: HTMLCanvasElement): boolean {
+    try {
+      return Boolean(
+        probe.getContext('webgl2') ?? probe.getContext('webgl'),
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  /** 無 WebGL 可用（探測失敗，或探測通過但實際初始化仍失敗）：走同一條退化路徑 */
+  function fallBackToStatic(): void {
+    document.documentElement.classList.remove('seq-pending');
+    bootLog?.remove();
+    skipHint?.remove();
+  }
+
+  async function boot(): Promise<void> {
+    if (!canvas) return;
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // 無 WebGL：不下載 three.js，DOM 字標留在畫面上，網站照常運作
+    if (!supportsWebGL(document.createElement('canvas'))) {
+      fallBackToStatic();
+      return;
+    }
+
+    // 動態 import：這一行是「無 WebGL 就不付下載成本」的實作
+    const { createDither } = await import('../lib/dither');
+
+    const styles = getComputedStyle(document.documentElement);
+    const handle: DitherHandle = createDither(canvas, {
+      ground: styles.getPropertyValue('--ground').trim(),
+      ink: styles.getPropertyValue('--ink').trim(),
+      accent: styles.getPropertyValue('--accent').trim(),
+    });
+    window.__dither = handle;
+
+    // 探測通過但實際建構 WebGL context 仍可能失敗（context 上限、驅動拒絕等）。
+    // createDither 這時回傳惰性 handle（active === false），跟沒有 WebGL 一樣退化。
+    if (!handle.active) {
+      fallBackToStatic();
+      return;
+    }
+
+    document.documentElement.classList.add('gl-active');
+
+    const alreadyPlayed = sessionStorage.getItem(SESSION_KEY) === '1';
+    const skipSequence = reduced || alreadyPlayed;
+
+    if (skipSequence) {
+      handle.setFrame(IDLE_FRAME);
+      document.documentElement.classList.remove('seq-pending');
+      document.documentElement.classList.add('seq-done');
+      bootLog?.remove();
+      skipHint?.remove();
+      return;
+    }
+
+    let startedAt = performance.now();
+    let finished = false;
+
+    function skip(): void {
+      if (finished) return;
+      startedAt = performance.now() - TIMELINE.settle;
+    }
+    document.addEventListener('keydown', skip, { once: false });
+    document.addEventListener('pointerdown', skip, { once: false });
+
+    function step(): void {
+      const ms = performance.now() - startedAt;
+      const frame = frameAt(ms);
+      handle.setFrame(frame);
+
+      if (bootLog) {
+        bootLog.textContent = frame.phase === 'boot' || frame.phase === 'scan'
+          ? bootLinesAt(ms).join('\n')
+          : '';
+        bootLog.style.opacity = frame.phase === 'breach'
+          ? String(1 - (ms - TIMELINE.scan) / (TIMELINE.breach - TIMELINE.scan))
+          : frame.phase === 'boot' || frame.phase === 'scan' ? '1' : '0';
+      }
+      document.documentElement.style.setProperty('--seq-chrome', String(frame.chrome));
+      document.documentElement.style.setProperty('--seq-flash', String(frame.flash));
+
+      // SETTLE 一開始就把 #fx 沉回背景：內容硬切露出
+      if (frame.chrome > 0) {
+        document.documentElement.classList.remove('seq-pending');
+      }
+
+      if (frame.phase === 'idle') {
+        finished = true;
+        sessionStorage.setItem(SESSION_KEY, '1');
+        document.documentElement.classList.add('seq-done');
+        bootLog?.remove();
+        skipHint?.remove();
+        return;
+      }
+      requestAnimationFrame(step);
+    }
+
+    document.documentElement.style.setProperty('--seq-chrome', '0');
+    requestAnimationFrame(step);
+  }
+
+  void boot();
+</script>

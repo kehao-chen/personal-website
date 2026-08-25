@@ -252,3 +252,62 @@ a { color: var(--accent); }
 .cmd b { color: var(--accent); font-weight: 600; }
 .soft { color: var(--muted); }
 .hot { color: var(--accent); }
+
+/* ============================ 入侵序列 ============================ */
+#boot-log {
+  position: fixed;
+  left: 2.6rem;
+  top: 2.2rem;
+  z-index: 5;
+  margin: 0;
+  font: 0.72rem/2.05 var(--font-mono);
+  letter-spacing: 0.09em;
+  color: var(--accent);
+  white-space: pre;
+  pointer-events: none;
+}
+#skip-hint {
+  position: fixed;
+  right: 2.6rem;
+  bottom: 2.1rem;
+  z-index: 5;
+  margin: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  color: var(--dim);
+  pointer-events: none;
+}
+
+/* 序列進行中「不藏內容，用不透明的 canvas 蓋住它」。
+   內容照常繪製，所以 LCP 正常計時；視覺上被 #fx 蓋著。
+   序列結束時 #fx 沉回背景，內容硬切露出——比淡入更貼合這個美學。 */
+html { --seq-chrome: 1; --seq-flash: 0; }
+
+/* seq-pending 由 <head> 的同步 inline script 決定，先於首次繪製，所以不會閃 */
+html.seq-pending #fx {
+  z-index: 8;
+  /* three.js 還沒載入完時先用底色擋著，避免透出下方內容 */
+  background: var(--ground);
+}
+
+/* 導覽列（不是 LCP 元素）仍然依 --seq-chrome 淡入 */
+html.seq-pending .site-nav { opacity: var(--seq-chrome); }
+
+/* WebGL 會自己畫字標，DOM 字標降為透明但保留在無障礙樹中 */
+html.gl-active .wordmark { opacity: 0; }
+
+/* 全螢幕白閃 */
+html.seq-pending::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  background: var(--ink);
+  opacity: var(--seq-flash);
+  mix-blend-mode: difference;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #boot-log, #skip-hint { display: none; }
+}
