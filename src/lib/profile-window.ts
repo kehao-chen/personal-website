@@ -44,8 +44,38 @@ function onClick(event: MouseEvent): void {
   }
 }
 
+/**
+ * `:q` 需要記住前一個鍵。只保留一個字元的記憶，而且任何非預期的鍵都會清掉它
+ * ——不做完整的 vim 命令列解析，那不是這個彩蛋的重點。
+ */
+let pendingColon = false;
+
+function onKeydown(event: KeyboardEvent): void {
+  // 序列進行中，所有按鍵屬於「跳過序列」，不搶
+  if (document.documentElement.classList.contains('seq-pending')) return;
+  // 修飾鍵組合是瀏覽器捷徑，不搶
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  // 只在視窗開著時作用：關掉的視窗不該被鍵盤打開
+  if (!isOpen()) { pendingColon = false; return; }
+
+  if (event.key === 'Escape') {
+    setOpen(false);
+    pendingColon = false;
+    return;
+  }
+
+  if (pendingColon && event.key === 'q') {
+    setOpen(false);
+    pendingColon = false;
+    return;
+  }
+
+  pendingColon = event.key === ':';
+}
+
 export function initProfileWindow(): void {
   // 委派到 document：換頁後 DOM 會被換掉，綁在元素上的 listener 會跟著消失。
   // 委派讓這個模組只需要初始化一次。
   document.addEventListener('click', onClick);
+  document.addEventListener('keydown', onKeydown);
 }

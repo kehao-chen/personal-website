@@ -155,3 +155,41 @@ test('換頁離開再回來，視窗重置為開啟', async ({ page }) => {
 
   await expect(page.locator('#profile-window')).toBeVisible();
 });
+
+test('序列播完後，ESC 關閉視窗', async ({ page }) => {
+  await page.goto('/');
+  // 序列進行中會攔截所有按鍵當作「跳過」，必須等它結束
+  await expect(page.locator('html')).toHaveClass(/seq-done/, { timeout: 10_000 });
+  await expect(page.locator('#profile-window')).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#profile-window')).toBeHidden();
+});
+
+test('序列播完後，:q 關閉視窗', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveClass(/seq-done/, { timeout: 10_000 });
+
+  await page.keyboard.press(':');
+  await page.keyboard.press('q');
+  await expect(page.locator('#profile-window')).toBeHidden();
+});
+
+test('序列進行中按 ESC 是跳過序列，不是關視窗', async ({ page }) => {
+  await page.goto('/');
+  // 序列剛開始就按：這一下應該被序列的 skip 吃掉
+  await page.keyboard.press('Escape');
+  await expect(page.locator('html')).toHaveClass(/seq-done/, { timeout: 10_000 });
+  // 視窗仍然開著
+  await expect(page.locator('#profile-window')).toBeVisible();
+});
+
+test('視窗已關閉時，ESC 不會把它打開', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveClass(/seq-done/, { timeout: 10_000 });
+  await page.locator('.vim-close').click();
+  await expect(page.locator('#profile-window')).toBeHidden();
+
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#profile-window')).toBeHidden();
+});
