@@ -147,7 +147,7 @@ WebGL 背景吃 shader 故障；DOM 文字另外複製兩層做橫向區塊位�
 
 ### 3.1 選型
 
-- **Astro 5**，靜態輸出，TypeScript
+- **Astro 6**，靜態輸出，TypeScript
 - **不使用任何 UI 框架**——本站無一處需要框架的狀態管理
 - **three.js** 以原生 TS 撰寫成 island
 - **部署**：Cloudflare Pages

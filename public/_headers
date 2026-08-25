@@ -1,0 +1,13 @@
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+/rss.xml
+  Content-Type: application/rss+xml; charset=utf-8
+
+/zh/rss.xml
+  Content-Type: application/rss+xml; charset=utf-8
