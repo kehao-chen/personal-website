@@ -1,0 +1,24 @@
+---
+interface Props {
+  /** 圖示下方的檔名，同時是無障礙名稱的一部分 */
+  label: string;
+  /** aria-label：完整的動作描述，例如「開啟 ~/.profile」 */
+  action: string;
+  /** 被控制的視窗 id */
+  controls: string;
+}
+
+const { label, action, controls } = Astro.props;
+---
+
+<button
+  type="button"
+  class="desktop-icon"
+  data-profile-toggle
+  aria-controls={controls}
+  aria-expanded="true"
+  aria-label={action}
+>
+  <span class="desktop-icon-glyph" aria-hidden="true"></span>
+  <span class="desktop-icon-label">{label}</span>
+</button>

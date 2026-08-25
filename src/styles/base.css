@@ -122,6 +122,65 @@ a { color: var(--accent); }
 }
 .win-ok { color: var(--accent); }
 
+/* ============================== 桌面 ==============================
+   抖色背景是桌布，.profile 是桌面上唯一一個圖示。 */
+.desktop {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  min-height: calc(100vh - 8rem);
+}
+
+.desktop-icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  border: 1px solid transparent;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  cursor: pointer;
+}
+.desktop-icon:hover, .desktop-icon:focus-visible {
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+/* 檔案圖示：一個帶折角的方框，純 CSS，不引入圖檔 */
+.desktop-icon-glyph {
+  width: 26px;
+  height: 32px;
+  border: 1px solid currentColor;
+  /* 右上角折角 */
+  clip-path: polygon(0 0, 68% 0, 100% 26%, 100% 100%, 0 100%);
+}
+
+/* 關閉狀態：視窗收起。用 visibility 而非 display，才能有開關動畫。 */
+.desktop:not([data-open]) .vim {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.97);
+}
+.vim {
+  transition: opacity 120ms linear, transform 120ms ease-out;
+}
+
+/* 序列進行中一律收起，與其他內容一起在 chrome 長出來時硬切露出。
+   這一條同時是「無 JS 也正確」的關鍵：seq-pending 由 <head> 的 inline script
+   設定，沒有 JS 就不會有這個 class，視窗自然是開的。 */
+html.seq-pending .vim {
+  opacity: 0;
+  visibility: hidden;
+}
+
 /* ============================ 編輯器視窗 ============================
    vim 的視覺語彙：行號欄、~ 填充行、上下兩條檔名列。與 .win 一樣，底是實心
    ground，背景抖色永遠碰不到文字。 */
@@ -308,7 +367,7 @@ a { color: var(--accent); }
   color: var(--muted);
 }
 /* ============================== 版面 ============================== */
-.layout-front { display: flex; align-items: flex-end; min-height: calc(100vh - 8rem); }
+.layout-front { position: relative; }
 .layout-front .vim { width: min(580px, 54vw); }
 .layout-reading { max-width: 820px; margin: 0 auto; }
 .layout-list { max-width: 860px; margin: 0 auto; }
@@ -504,11 +563,20 @@ html.seq-pending::after {
   }
   .wordmark-sub { letter-spacing: 0.34em; }
 
-  .layout-front {
+  /* 窄畫面不做桌面隱喻：沒有圖示、沒有關閉鈕、視窗恆開。
+     桌面隱喻需要「圖示與視窗是兩個東西」的空間關係，320px 放不下；
+     而把自我介紹藏在一次點擊後面，在手機上是實質的內容損失。 */
+  .desktop-icon, .vim-close { display: none; }
+  .desktop {
     display: block;
     min-height: 0;
     /* 讓出上半部給字標 */
     padding-top: 46vh;
+  }
+  .desktop:not([data-open]) .vim {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
   }
   .layout-front .vim { width: 100%; }
   .vim-body { padding: 0.9rem 1rem 0.9rem calc(1rem + var(--gutter)); font-size: 0.8rem; }

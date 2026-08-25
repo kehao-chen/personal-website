@@ -63,6 +63,9 @@ test('首頁不再有舊的終端機視窗', async ({ page }) => {
 
 test('[x] 的點擊區達到 WCAG 2.5.8 的 24px', async ({ page }) => {
   await page.goto('/');
+  // 序列播放期間 .vim（含 [x]）visibility:hidden，elementFromPoint 打不到它；
+  // 等視窗真的可見再量測，不然中心點本身就會落空。
+  await expect(page.locator('.vim-close')).toBeVisible();
   // 視覺盒刻意維持小尺寸（標題列高度由字級決定），熱區靠覆蓋式 ::after 撐開，
   // 所以量 boundingBox 量不到——要從中心往上下打點，看命中的是不是同一個按鈕。
   const height = await page.evaluate(() => {
@@ -82,4 +85,73 @@ test('[x] 的點擊區達到 WCAG 2.5.8 的 24px', async ({ page }) => {
     return up + down + 1;
   });
   expect(height).toBeGreaterThanOrEqual(24);
+});
+
+test('點 [x] 關閉視窗，點圖示重新開啟', async ({ page }) => {
+  await page.goto('/');
+  const desktop = page.locator('.desktop');
+  const win = page.locator('#profile-window');
+  const icon = page.locator('.desktop-icon');
+
+  await expect(win).toBeVisible();
+  await expect(icon).toHaveAttribute('aria-expanded', 'true');
+
+  await page.locator('.vim-close').click();
+  await expect(win).toBeHidden();
+  await expect(desktop).not.toHaveAttribute('data-open', /.*/);
+  await expect(icon).toHaveAttribute('aria-expanded', 'false');
+
+  await icon.click();
+  await expect(win).toBeVisible();
+  await expect(icon).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('停用 JavaScript 時視窗是開的，內容完整可見', async ({ browser }) => {
+  const ctx = await browser.newContext({ javaScriptEnabled: false });
+  const page = await ctx.newPage();
+  await page.goto('/');
+  await expect(page.locator('#profile-window')).toBeVisible();
+  await expect(page.locator('#profile-window')).toContainText('Cloud-native & AI infrastructure');
+  await ctx.close();
+});
+
+test('序列播放期間視窗收起，chrome 長出來後才露出', async ({ page }) => {
+  await page.goto('/');
+
+  // 序列剛開始：<head> 的 inline script 已經設了 seq-pending，視窗應該是收起的
+  await expect(page.locator('html')).toHaveClass(/seq-pending/);
+  await expect(page.locator('#profile-window')).toBeHidden();
+
+  // 序列跑到 chrome > 0 時 site-dither 會移除 seq-pending，內容硬切露出
+  await expect(page.locator('html')).not.toHaveClass(/seq-pending/, { timeout: 10_000 });
+  await expect(page.locator('#profile-window')).toBeVisible();
+
+  // wrapper 的 data-open 從頭到尾沒被動過——收起是 seq-pending 造成的，不是關閉狀態
+  await expect(page.locator('.desktop')).toHaveAttribute('data-open', '');
+});
+
+test('同一 session 第二次進首頁不播序列，視窗立刻是開的', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveClass(/seq-done/, { timeout: 10_000 });
+
+  // 同一個 context 重新進入：head script 讀到 hh.sequence.played 就不會設 seq-pending
+  await page.goto('/writing/');
+  await page.goto('/');
+  await expect(page.locator('html')).not.toHaveClass(/seq-pending/);
+  await expect(page.locator('#profile-window')).toBeVisible();
+});
+
+test('換頁離開再回來，視窗重置為開啟', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.vim-close').click();
+  await expect(page.locator('#profile-window')).toBeHidden();
+
+  await page.locator('.site-nav a[href="/writing/"]').click();
+  await expect(page).toHaveURL(/\/writing\/$/);
+  // `.site-nav a[href="/"]` 同時命中 .brand 與 HOME 這兩個連結（兩者都指向
+  // 首頁）；用 .nav-link 縮小到真正的導覽項目，避免 strict mode violation。
+  await page.locator('.site-nav .nav-link[href="/"]').click();
+  await expect(page).toHaveURL(/localhost:4321\/$/);
+
+  await expect(page.locator('#profile-window')).toBeVisible();
 });
