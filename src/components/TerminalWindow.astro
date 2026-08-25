@@ -1,0 +1,45 @@
+---
+interface Props {
+  /** 標題列顯示的路徑，例如 ~/writing/aks-lun.md */
+  path: string;
+  /** 標題列右側承載資訊的 metadata，例如 UTF-8 · ZH-HANT · 14 MIN */
+  meta?: string;
+  /** 標題列右側的純裝飾文字（用 --dim）。與 meta 擇一。 */
+  deco?: string;
+  /** 狀態列最左側，預設 EOF */
+  footLeft?: string;
+  /** 狀態列其餘項目 */
+  footItems?: string[];
+  /** prose 使用無襯線內文排版；plain 保持等寬 */
+  variant?: 'prose' | 'plain';
+}
+
+const {
+  path,
+  meta,
+  deco,
+  footLeft = 'EOF',
+  footItems = [],
+  variant = 'plain',
+} = Astro.props;
+---
+
+<section class="win">
+  <header class="win-bar">
+    <i class="win-dot" aria-hidden="true"></i>
+    <span class="win-path">{path}</span>
+    {meta && <span class="win-meta">{meta}</span>}
+    {!meta && deco && <span class="win-deco">{deco}</span>}
+  </header>
+
+  <div class:list={['win-body', variant]}>
+    <slot />
+  </div>
+
+  {(footLeft || footItems.length > 0) && (
+    <footer class="win-foot">
+      <span class="win-ok">● {footLeft}</span>
+      {footItems.map((item) => <span>{item}</span>)}
+    </footer>
+  )}
+</section>

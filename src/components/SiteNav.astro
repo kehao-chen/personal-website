@@ -1,0 +1,34 @@
+---
+import type { Locale } from '../lib/posts';
+import { localizePath } from '../lib/i18n/routing';
+import { t } from '../lib/i18n/ui';
+
+interface Props {
+  locale: Locale;
+  current: 'home' | 'writing' | 'about';
+}
+
+const { locale, current } = Astro.props;
+
+const links = [
+  { key: 'home' as const, href: localizePath(locale, '/'), label: t(locale, 'nav.home') },
+  { key: 'writing' as const, href: localizePath(locale, '/writing'), label: t(locale, 'nav.writing') },
+  { key: 'about' as const, href: localizePath(locale, '/about'), label: t(locale, 'nav.about') },
+];
+
+const otherLocale: Locale = locale === 'en' ? 'zh' : 'en';
+---
+
+<nav class="site-nav">
+  <a class="brand" href={localizePath(locale, '/')}>HAPPYHACKING.NINJA</a>
+  {links.map((link) => (
+    <a
+      href={link.href}
+      class:list={['nav-link', { on: link.key === current }]}
+      aria-current={link.key === current ? 'page' : undefined}
+    >{link.label}</a>
+  ))}
+  <a class="nav-lang" href={localizePath(otherLocale, '/')}>
+    {otherLocale === 'zh' ? '中文' : 'EN'}
+  </a>
+</nav>

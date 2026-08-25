@@ -1,7 +1,18 @@
 ---
 import '../styles/base.css';
+import SiteNav from '../components/SiteNav.astro';
+import TerminalWindow from '../components/TerminalWindow.astro';
+import Wordmark from '../components/Wordmark.astro';
 ---
 <html lang="en">
   <head><meta charset="utf-8" /><title>happyhacking.ninja</title></head>
-  <body><p>bootstrap</p></body>
+  <body>
+    <SiteNav locale="en" current="home" />
+    <Wordmark />
+    <main class="page layout-front">
+      <TerminalWindow path="guest@happyhacking:~" deco="SSH · 80×24" footLeft="LINK OK" footItems={['LATENCY 12ms', 'UTF-8']}>
+        <p>Cloud-native &amp; AI infrastructure.</p>
+      </TerminalWindow>
+    </main>
+  </body>
 </html>
