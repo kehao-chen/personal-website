@@ -24,8 +24,14 @@ test('hreflang 三個條目齊備', async ({ page }) => {
   await page.goto('/writing/');
   const links = page.locator('link[rel="alternate"]');
   await expect(links).toHaveCount(3);
+  // canonical 是 /writing/（目錄形式），自我指涉的 hreflang 必須一模一樣，
+  // 否則整組 hreflang 會被搜尋引擎丟棄。
+  await expect(page.locator('link[rel="canonical"]'))
+    .toHaveAttribute('href', /\/writing\/$/);
+  await expect(page.locator('link[hreflang="en"]'))
+    .toHaveAttribute('href', /\/writing\/$/);
   await expect(page.locator('link[hreflang="zh-Hant"]'))
-    .toHaveAttribute('href', /\/zh\/writing$/);
+    .toHaveAttribute('href', /\/zh\/writing\/$/);
 });
 
 /**

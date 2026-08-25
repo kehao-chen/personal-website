@@ -10,15 +10,17 @@ interface Props {
   locale: Locale;
 }
 const { tags, active, basePath, locale } = Astro.props;
+// 一律用目錄形式，跟 localizePath 與 canonical 一致，站內連結才不會吃 308 轉址
+const base = basePath.endsWith('/') ? basePath : `${basePath}/`;
 ---
 <div class="tag-filter">
-  <a class:list={['tag', { on: active === null }]} href={basePath}>
+  <a class:list={['tag', { on: active === null }]} href={base}>
     {t(locale, 'writing.allTags')}
   </a>
   {tags.map((tag) => (
     <a
       class:list={['tag', { on: active?.toLowerCase() === tag.toLowerCase() }]}
-      href={`${basePath}/tag/${tag.toLowerCase()}`}
+      href={`${base}tag/${tag.toLowerCase()}/`}
     >{tag}</a>
   ))}
 </div>

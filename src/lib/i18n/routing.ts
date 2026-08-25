@@ -1,4 +1,4 @@
-import { LOCALES, type Locale } from '../posts';
+import { LOCALES, type Locale } from './locales';
 
 export const DEFAULT_LOCALE: Locale = 'en';
 
@@ -8,14 +8,27 @@ const HREFLANG: Record<Locale, string> = {
   zh: 'zh-Hant',
 };
 
+/**
+ * 正規化成「目錄形式」——一律補上尾斜線。
+ *
+ * Astro 預設的 `directory` build format 讓每一頁都是 `/writing/index.html`，
+ * 所以 `Astro.url.pathname`（canonical 的來源）永遠帶尾斜線。這裡如果不補，
+ * hreflang 會指向 `/writing` 而 canonical 是 `/writing/`——自我指涉的 hreflang
+ * 與 canonical 不一致，整組 hreflang 會被搜尋引擎丟棄；站內連結也會在
+ * Cloudflare Pages 上多吃一次 308 轉址。
+ */
 function normalise(path: string): string {
-  return '/' + path.replace(/^\/+/, '');
+  const clean = '/' + path.replace(/^\/+/, '');
+  return clean.endsWith('/') ? clean : `${clean}/`;
 }
 
 export function localizePath(locale: Locale, path: string): string {
   const clean = normalise(path);
   if (locale === DEFAULT_LOCALE) return clean;
-  return clean === '/' ? `/${locale}/` : `/${locale}${clean}`;
+  const prefix = `/${locale}/`;
+  // 已經有前綴就不要再加一層：localizePath('zh', '/zh/about/') 仍是 /zh/about/
+  if (clean.startsWith(prefix)) return clean;
+  return clean === '/' ? prefix : `${prefix}${clean.slice(1)}`;
 }
 
 export function localeFromPath(pathname: string): Locale {

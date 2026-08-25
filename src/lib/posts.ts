@@ -1,8 +1,10 @@
 import type { CollectionEntry } from 'astro:content';
 import { estimateReadingTime } from './reading-time';
+import { LOCALES, type Locale } from './i18n/locales';
 
-export const LOCALES = ['en', 'zh'] as const;
-export type Locale = (typeof LOCALES)[number];
+// 語言清單的家在 i18n/locales.ts（見那裡的註解）；這裡沿用原本的匯出點，
+// 讓既有的 `import type { Locale } from '../lib/posts'` 全部維持不變。
+export { LOCALES, type Locale };
 
 export interface PostMeta {
   slug: string;

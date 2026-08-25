@@ -14,7 +14,7 @@ test.describe('關閉 JavaScript', () => {
     await page.goto('/');
     await expect(page.locator('.site-nav')).toBeVisible();
     await expect(page.locator('a.nav-link', { hasText: 'WRITING' }))
-      .toHaveAttribute('href', '/writing');
+      .toHaveAttribute('href', '/writing/');
   });
 
   test('首頁字標可見', async ({ page }) => {
