@@ -1,0 +1,24 @@
+---
+import type { Locale } from '../lib/posts';
+import { t } from '../lib/i18n/ui';
+
+interface Props {
+  tags: string[];
+  active: string | null;
+  /** 已含語言前綴的索引頁路徑，例如 /zh/writing */
+  basePath: string;
+  locale: Locale;
+}
+const { tags, active, basePath, locale } = Astro.props;
+---
+<div class="tag-filter">
+  <a class:list={['tag', { on: active === null }]} href={basePath}>
+    {t(locale, 'writing.allTags')}
+  </a>
+  {tags.map((tag) => (
+    <a
+      class:list={['tag', { on: active?.toLowerCase() === tag.toLowerCase() }]}
+      href={`${basePath}/tag/${tag.toLowerCase()}`}
+    >{tag}</a>
+  ))}
+</div>

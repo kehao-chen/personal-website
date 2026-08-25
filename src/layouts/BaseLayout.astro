@@ -1,0 +1,47 @@
+---
+import '../styles/base.css';
+import type { Locale } from '../lib/posts';
+import SiteNav from '../components/SiteNav.astro';
+import { alternateHreflang } from '../lib/i18n/routing';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  /** 不含語言前綴的正規路徑，例如 /writing */
+  path: string;
+  current: 'home' | 'writing' | 'about';
+  front?: boolean;
+}
+
+const { locale, title, description, path, current, front = false } = Astro.props;
+const alternates = alternateHreflang(path);
+const htmlLang = locale === 'zh' ? 'zh-Hant' : 'en';
+---
+
+<html lang={htmlLang} data-front={front ? 'true' : undefined}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    {alternates.map((alt) => (
+      <link rel="alternate" hreflang={alt.hreflang} href={new URL(alt.href, Astro.site)} />
+    ))}
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <slot name="head" />
+  </head>
+  <body>
+    <!-- 抖色 canvas 與故障分層的家。跨頁保留，避免換頁時被抽掉。 -->
+    <div id="fx" transition:persist aria-hidden="true">
+      <canvas id="dither-canvas"></canvas>
+      <div id="fx-layers"></div>
+    </div>
+
+    <SiteNav locale={locale} current={current} />
+    <slot />
+  </body>
+</html>

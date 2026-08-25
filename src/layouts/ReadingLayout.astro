@@ -1,0 +1,18 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import type { Locale } from '../lib/posts';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  path: string;
+  current: 'home' | 'writing' | 'about';
+}
+const props = Astro.props;
+---
+<!-- front=false：這條路徑不會載入 three.js -->
+<BaseLayout {...props} front={false}>
+  <slot name="head" slot="head" />
+  <slot />
+</BaseLayout>

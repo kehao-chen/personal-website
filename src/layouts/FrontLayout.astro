@@ -1,0 +1,17 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import type { Locale } from '../lib/posts';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  path: string;
+  current: 'home' | 'writing' | 'about';
+}
+const props = Astro.props;
+---
+<BaseLayout {...props} front={true}>
+  <slot name="head" slot="head" />
+  <slot />
+</BaseLayout>

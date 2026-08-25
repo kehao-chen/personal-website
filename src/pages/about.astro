@@ -1,0 +1,27 @@
+---
+import FrontLayout from '../layouts/FrontLayout.astro';
+import TerminalWindow from '../components/TerminalWindow.astro';
+---
+<FrontLayout
+  locale="en"
+  title="About — KEHAO"
+  description="Who I am and what I work on."
+  path="/about"
+  current="about"
+>
+  <main class="page layout-reading">
+    <TerminalWindow path="~/about.md" deco="READ-ONLY" footLeft="LINK OK" footItems={['GITHUB · LINKEDIN · RSS']} variant="prose">
+      <h1>About</h1>
+      <p>
+        I work on cloud infrastructure, mostly on Azure and Kubernetes. Recently
+        most of my time goes into making LLM agents production-grade — not demos,
+        but systems that can be deployed, audited, and debugged when they break.
+      </p>
+      <p>
+        This site is where I keep my notes. Most technical writing is in Traditional
+        Chinese, because that is the language I think in. Some of it gets an English
+        version.
+      </p>
+    </TerminalWindow>
+  </main>
+</FrontLayout>

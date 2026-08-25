@@ -1,12 +1,12 @@
 ---
-import FrontLayout from '../layouts/FrontLayout.astro';
-import TerminalWindow from '../components/TerminalWindow.astro';
-import Wordmark from '../components/Wordmark.astro';
+import FrontLayout from '../../layouts/FrontLayout.astro';
+import TerminalWindow from '../../components/TerminalWindow.astro';
+import Wordmark from '../../components/Wordmark.astro';
 ---
 <FrontLayout
-  locale="en"
+  locale="zh"
   title="KEHAO — happyhacking.ninja"
-  description="Cloud-native and AI infrastructure. Notes mostly in 中文, occasionally English."
+  description="雲端原生與 AI 基礎建設的筆記。"
   path="/"
   current="home"
 >
@@ -20,9 +20,8 @@ import Wordmark from '../components/Wordmark.astro';
     >
       <p class="cmd">$ <b>cat ~/.profile</b></p>
       <p>
-        Cloud-native &amp; AI infrastructure. I build the boring parts that let
-        the interesting parts stay up.<br />
-        <span class="soft">Notes mostly in 中文, occasionally English.</span>
+        我做雲端基礎建設，主要在 Azure 與 Kubernetes 上。<br />
+        <span class="soft">近幾年花很多時間在 LLM agent 的工程化。</span>
       </p>
       <p class="soft">STATUS <span class="hot">ONLINE</span> · TAIPEI · AZURE / KUBERNETES / LLM AGENTS</p>
     </TerminalWindow>

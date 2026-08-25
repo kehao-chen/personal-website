@@ -1,0 +1,22 @@
+---
+import type { Locale, PostMeta } from '../lib/posts';
+import { t } from '../lib/i18n/ui';
+
+interface Props {
+  post: PostMeta;
+  href: string;
+  locale: Locale;
+}
+const { post, href, locale } = Astro.props;
+const langLabel = post.locale === 'zh' ? '中文' : 'EN';
+const dateLabel = post.date.toISOString().slice(0, 10);
+---
+<a class="post-row" href={href}>
+  <span class="post-title">{post.title}</span>
+  <span class="post-meta">
+    <span class="post-lang">{langLabel}</span>
+    <span>{dateLabel}</span>
+    <span>{post.readingTime} {t(locale, 'post.readingTime')}</span>
+    {post.tags.length > 0 && <span>{post.tags.join(' · ')}</span>}
+  </span>
+</a>

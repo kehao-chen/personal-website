@@ -1,0 +1,35 @@
+---
+import FrontLayout from '../../../layouts/FrontLayout.astro';
+import TerminalWindow from '../../../components/TerminalWindow.astro';
+import PostRow from '../../../components/PostRow.astro';
+import TagFilter from '../../../components/TagFilter.astro';
+import { loadPosts, sortByDate, filterByLocale, collectTags } from '../../../lib/posts';
+import { localizePath } from '../../../lib/i18n/routing';
+import { t } from '../../../lib/i18n/ui';
+
+const all = await loadPosts();
+const posts = sortByDate(filterByLocale(all, 'zh'));
+const tags = collectTags(posts);
+---
+<FrontLayout
+  locale="zh"
+  title="文章 — KEHAO"
+  description="雲端原生、Azure 與 LLM agent 的筆記。"
+  path="/writing"
+  current="writing"
+>
+  <main class="page layout-list">
+    <TerminalWindow
+      path="~/writing"
+      meta={`${posts.length} ${t('zh', 'writing.count')}`}
+      footLeft="EOF"
+      footItems={['NO FILTER']}
+    >
+      <TagFilter tags={tags} active={null} basePath="/zh/writing" locale="zh" />
+      {posts.length === 0 && <p class="soft">{t('zh', 'writing.empty')}</p>}
+      {posts.map((post) => (
+        <PostRow post={post} href={localizePath('zh', `/writing/${post.slug}`)} locale="zh" />
+      ))}
+    </TerminalWindow>
+  </main>
+</FrontLayout>
