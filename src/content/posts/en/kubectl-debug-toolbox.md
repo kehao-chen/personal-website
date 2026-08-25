@@ -6,6 +6,10 @@ lang: en
 tags: ["KUBERNETES"]
 ---
 
+*Sample post — seeded as placeholder content for this site's test suite, not
+a claim about any specific team's process. Replace or remove before this
+post is treated as real.*
+
 Most incidents don't need a service mesh dashboard or a tracing UI. They need
 `kubectl describe`, `kubectl logs --previous`, and someone who reads the
 output slowly.

@@ -44,6 +44,11 @@ test('標籤篩選會縮小清單', async ({ page }) => {
   const after = await page.locator('.post-row').count();
   expect(after, '掛 KUBERNETES 標籤的文章數').toBe(1);
   expect(after).toBeLessThan(before);
+
+  // 被篩掉的那篇（沒有 KUBERNETES 標籤）不該出現在篩選後的清單裡
+  await expect(page.locator('.post-row')).not.toContainText(
+    'Designing an Approval Orchestrator for LLM Agents',
+  );
 });
 
 test('單語文章顯示提示而非 404', async ({ page }) => {
