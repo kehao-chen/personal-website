@@ -16,9 +16,9 @@
 
 ### v1 範圍
 
-**做**：首頁入侵序列、文章索引、文章頁、About、雙語路由、RSS、404。
+**做**：首頁入侵序列、文章索引（含標籤篩選）、文章頁、About、雙語路由、RSS、404。
 
-**不做**（明確排除，避免範圍蔓延）：站內搜尋、留言系統、標籤索引頁（`tags` 欄位先存著但不產生頁面）、淺色主題（此站只有一種模式）。
+**不做**（明確排除，避免範圍蔓延）：站內搜尋、留言系統、淺色主題（此站只有一種模式）。
 
 ---
 
@@ -77,6 +77,8 @@
 ### 2.4 字標
 
 `KEHAO` 為主，`// HAPPY HACKING` 為副標。
+
+**只在首頁出現。** 字標是首頁專屬的主體，不是全站背景元素——在其他路由出現會搶掉該頁自身的主體（文章標題、索引清單），且讀起來像沒清乾淨的殘留。此規則在三種渲染模式（完整 / 無 WebGL / 無 JS）下一致。
 
 **低頻閃動**：每 4.2 秒（±40% 隨機）抽動一次，持續 70–160ms，期間不透明度與 glitch 短暫跳動。持續抖動是雜訊，偶爾抽動才是角色。
 
@@ -152,15 +154,17 @@ WebGL 背景吃 shader 故障；DOM 文字另外複製兩層做橫向區塊位�
 
 ### 3.2 效能架構（關鍵約束）
 
-**只有 `/` 與 `/zh/` 載入 three.js。其餘所有路由完全不含 WebGL bundle。**
+**文章內頁（`/writing/<slug>`）不載入 three.js。其餘路由可以有背景動畫。**
 
-| 路由 | WebGL | 入侵序列 |
-|---|---|---|
-| `/`、`/zh/` | 載入 | 每 session 一次 |
-| `/writing`、`/about` 及 `/zh/` 對應 | 不載入 | 無 |
-| `/writing/<slug>` | 不載入 | 無 |
+| 路由 | WebGL | 入侵序列 | 字標 |
+|---|---|---|---|
+| `/`、`/zh/` | 載入，完整強度 | 每 session 一次 | 有 |
+| `/writing`、`/about` 及 `/zh/` 對應 | 載入，降低強度 | 無 | 無 |
+| `/writing/<slug>` | **不載入** | 無 | 無 |
 
-多數讀者從搜尋引擎直接進入文章頁，不該為看不到的動畫付下載成本。直接深連結到非首頁的路由時，不播放序列——序列是「進入這個網站」的儀式，不是每個頁面的開場。
+只擋文章內頁是刻意的取捨：多數讀者從搜尋引擎直接落在文章頁，不該為看不到的動畫付下載成本；而 About 這類門面頁的訪客本來就是來看你這個人的，動畫在那裡有意義。
+
+直接深連結到非首頁的路由時，不播放序列——序列是「進入這個網站」的儀式，不是每個頁面的開場。
 
 WebGL 一律是**裝飾層**：所有內容存在於 DOM，關閉 JS 時網站照常運作與被索引。
 
@@ -190,32 +194,13 @@ src/content.config.ts   zod schema
 
 ---
 
-## 4. 內容管線
+## 4. 內容來源
 
-### 4.1 單向發佈
+網站自己擁有 `src/content/posts/<lang>/<slug>.md`，這是已發佈內容的唯一真相來源。
 
-私有的 `blog-drafts` 是**草稿過程**的真相來源；公開的網站 repo 是**已發佈內容**的真相來源。已發佈的文章本來就要公開，藏在私有 repo 沒有意義，還會讓公開 repo clone 下來建不起來。
+**作者流程（草稿如何變成這裡的檔案）暫不納入本設計。** 使用者將重新構思寫作工作流；在那之前，網站的契約只有一條：**符合下列 schema 的 markdown 檔案放進 `src/content/posts/` 就會被發佈。** 任何未來的寫作工具只要產出這個格式即可，不需要網站配合改動。
 
-```
-blog-drafts (私有)                    personal-website (公開)
-├── posts/<slug>/
-│   ├── source.md    ← 永不外流（逐字稿）
-│   ├── brief.md     ← 永不外流
-│   ├── review.md    ← 永不外流
-│   ├── social.md    ← 永不外流
-│   ├── index.md     ──── publish ───→  src/content/posts/<lang>/<slug>.md
-│   └── assets/      ──── publish ───→  src/assets/posts/<slug>/
-```
-
-### 4.2 `tools/publish.py`（位於私有 repo）
-
-職責刻意極窄：讀 frontmatter → 確認 `status: published` → 轉換欄位 → 複製 `index.md` 與 `assets/` → 回寫 `published_at`。
-
-- **預設 dry-run**，需 `--apply` 才實際寫入
-- 不做轉檔、不做最佳化、不做任何「順便」的事——每多一件順便的事，就多一個它會在半夜壞掉的理由
-- 絕不觸碰 `source.md` / `brief.md` / `review.md` / `social.md`
-
-### 4.3 Frontmatter schema
+### 4.1 Frontmatter schema
 
 | 欄位 | 型別 | 說明 |
 |---|---|---|
@@ -223,13 +208,13 @@ blog-drafts (私有)                    personal-website (公開)
 | `description` | string | |
 | `date` | date | |
 | `lang` | `'en' \| 'zh'` | |
-| `tags` | string[] | v1 不產生頁面，僅儲存 |
+| `tags` | string[] | 產生索引頁的標籤篩選 |
 | `translationKey` | string? | 中英版共同識別碼 |
-| `readingTime` | number | 分鐘。由發佈腳本計算後寫入，作者不手填 |
+| `readingTime` | number? | 分鐘。未提供時由 build 時計算 |
 
-`translationKey` 存在且找得到對應時，視窗標題列右側出現 `EN ⇄ ZH` 切換。
+`translationKey` 存在且找得到對應時，視窗標題列出現 `EN ⇄ ZH` 切換。
 
-schema 由 zod 驗證，**不合則 build 失敗**——格式錯誤在發佈時被擋下，不等到上線才發現。
+schema 由 zod 驗證，**不合則 build 失敗**——格式錯誤在建置時被擋下，不等到上線才發現。
 
 ---
 
@@ -250,6 +235,8 @@ schema 由 zod 驗證，**不合則 build 失敗**——格式錯誤在發佈時
 /404
 ```
 
+標籤篩選在索引頁內以查詢參數處理（`/writing?tag=AZURE`），**不產生獨立路由、不觸發故障轉場**——那是同頁內的篩選，不是路由變化。故障轉場只保留給真正的換頁。
+
 `hreflang` 依 `translationKey` 產生。
 
 **只有單語版本的文章不會 404 到另一個語言**——顯示該文章並標示「此篇僅有中文版」。對讀者而言，看到一篇讀不懂的文章仍然比撞牆好。
@@ -260,13 +247,12 @@ schema 由 zod 驗證，**不合則 build 失敗**——格式錯誤在發佈時
 
 | 情況 | 行為 |
 |---|---|
-| 無 WebGL / context lost | 跳過序列，靜態底色 + 純文字字標 |
+| 無 WebGL / context lost | 跳過序列；首頁改用 DOM 字標，其餘路由純底色。故障轉場仍運作（不依賴 WebGL），退化是漸進的 |
 | `prefers-reduced-motion` | 整段序列略過，無任何動畫 |
 | 關閉 JS | 全站可讀、可導覽，僅少了動畫 |
 | 序列已看過（sessionStorage） | 直接進站 |
 | 缺少翻譯版本 | 顯示原語言並標示，不 404 |
 | frontmatter 不合 schema | **build 失敗** |
-| 發佈腳本遇 `status != published` | 略過並記錄，不視為錯誤 |
 
 ---
 
@@ -280,10 +266,8 @@ schema 由 zod 驗證，**不合則 build 失敗**——格式錯誤在發佈時
 **Playwright（冒煙）**
 - 關閉 JS 時文章可讀、導覽可用
 - `prefers-reduced-motion` 下無動畫
-- **文章頁的 bundle 不含 three.js** — 這條是防止效能架構被未來的自己破壞的護欄
-
-**pytest（私有 repo）**
-- 發佈腳本：dry-run 不寫檔、status 過濾、私有檔案不外流
+- **文章內頁的 bundle 不含 three.js** — 這條是防止效能架構被未來的自己破壞的護欄
+- 無 WebGL 時首頁有 DOM 字標，其餘路由沒有
 
 ---
 
