@@ -163,14 +163,21 @@ a { color: var(--accent); }
   clip-path: polygon(0 0, 68% 0, 100% 26%, 100% 100%, 0 100%);
 }
 
-/* 關閉狀態：視窗收起。用 visibility 而非 display，才能有開關動畫。 */
+/* 關閉狀態：視窗收起。用 visibility 而非 display，才能有開關動畫
+   （display:none 會讓 transform 轉場整個跳過，visibility 不會）。
+
+   opacity 不放進 transition：淡入淡出的中間格會讓文字疊在半透明背景上，
+   對比不足，被 axe 抓到（Lighthouse 在序列剛結束、.vim 從 seq-pending
+   的 opacity:0 revert 回預設值的那 120ms 窗口內取樣，穩定命中）。
+   opacity 與 visibility 因此都瞬間切換，「彈出」的動態感全部交給
+   transform: scale(0.97) 這一段。 */
 .desktop:not([data-open]) .vim {
   opacity: 0;
   visibility: hidden;
   transform: scale(0.97);
 }
 .vim {
-  transition: opacity 120ms linear, transform 120ms ease-out;
+  transition: transform 120ms ease-out;
 }
 
 /* 序列進行中一律收起，與其他內容一起在 chrome 長出來時硬切露出。

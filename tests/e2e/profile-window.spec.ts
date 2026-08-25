@@ -251,6 +251,68 @@ test('序列進行中點到看不見的桌面圖示，序列結束後視窗仍�
   await expect(page.locator('#profile-window')).toBeVisible();
 });
 
+test('.vim 開合過程中，computed opacity 只會是 0 或 1，不會停在半透明的中間格（axe 對比護欄）', async ({ page }) => {
+  // 這條護欄對應一個實測會被 Lighthouse/axe 抓到的缺陷：.vim 的開合曾經用
+  // opacity 做轉場，序列剛結束、.vim 從 seq-pending 的 opacity:0 revert 回
+  // 顯示狀態的那 120ms 窗口內，文字會疊在半透明背景上，對比不足。
+  // 修法是讓 opacity/visibility 瞬間切換，只有 transform 做動畫——任何時間點
+  // 截圖，.vim 的 computed opacity 都該只是 '0' 或 '1'，絕不會停在中間值。
+  await page.goto('/');
+
+  // 涵蓋序列結束、.vim 從隱藏 revert 回顯示的那個瞬間：從現在開始連續取樣，
+  // 直到 seq-done 出現後再多跑一段緩衝，確保真的涵蓋轉場窗口。
+  const seqSamples = await page.evaluate(() => new Promise<string[]>((resolve) => {
+    const vim = document.querySelector('.vim');
+    const html = document.documentElement;
+    const values: string[] = [];
+    const start = performance.now();
+    let doneAt: number | null = null;
+    function tick() {
+      if (vim) values.push(getComputedStyle(vim).opacity);
+      if (doneAt === null && html.classList.contains('seq-done')) doneAt = performance.now();
+      const elapsed = performance.now() - start;
+      const bufferedAfterDone = doneAt !== null && performance.now() - doneAt > 300;
+      if (bufferedAfterDone || elapsed > 15_000) {
+        resolve(values);
+        return;
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }));
+
+  expect(seqSamples.length).toBeGreaterThan(0);
+  for (const opacity of seqSamples) expect(['0', '1']).toContain(opacity);
+
+  // 同一份護欄也涵蓋使用者手動點圖示關閉/重新開啟視窗的路徑
+  const toggleSamples = await page.evaluate(() => new Promise<string[]>((resolve) => {
+    const vim = document.querySelector('.vim');
+    const icon = document.querySelector<HTMLElement>('[data-profile-toggle]');
+    if (!vim || !icon) { resolve([]); return; }
+    const values: string[] = [];
+    const start = performance.now();
+    let reopened = false;
+    icon.click(); // 關閉
+    function tick() {
+      values.push(getComputedStyle(vim as Element).opacity);
+      const elapsed = performance.now() - start;
+      if (elapsed > 200 && !reopened) {
+        reopened = true;
+        (icon as HTMLElement).click(); // 重新開啟，繼續取樣開啟過程
+      }
+      if (elapsed > 400) {
+        resolve(values);
+        return;
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }));
+
+  expect(toggleSamples.length).toBeGreaterThan(0);
+  for (const opacity of toggleSamples) expect(['0', '1']).toContain(opacity);
+});
+
 test('文件裡混進 nav-glitch 式的 clone 時，ESC 只會影響真正的視窗', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('html')).toHaveClass(/seq-done/, { timeout: 10_000 });
