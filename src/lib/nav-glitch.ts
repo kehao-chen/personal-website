@@ -1,11 +1,8 @@
+import { isReadingRoute } from './routes';
+
 const DURATION_MS = 420;
 const SWAP_AT = 0.42;
 const LAYER_COUNT = 2;
-
-/** 文章內頁不套用故障轉場：門面耍帥，文章負責被讀完。 */
-function isFrontRoute(url: URL): boolean {
-  return !/\/writing\/[^/]+\/?$/.test(url.pathname);
-}
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -69,7 +66,8 @@ export function initNavGlitch(): void {
       loader: () => Promise<void>;
     };
 
-    if (reduced.matches || !isFrontRoute(nav.from) || !isFrontRoute(nav.to)) return;
+    // 門面耍帥，文章負責被讀完：任一端是閱讀路由就不播故障轉場
+    if (reduced.matches || isReadingRoute(nav.from.pathname) || isReadingRoute(nav.to.pathname)) return;
 
     const originalLoader = nav.loader;
     nav.loader = async () => {
@@ -79,12 +77,6 @@ export function initNavGlitch(): void {
       // 讓交換發生在故障最高點
       await Promise.all([originalLoader(), wait(DURATION_MS * SWAP_AT)]);
     };
-  });
-
-  document.addEventListener('astro:after-swap', () => {
-    // 換頁後停止抖色算繪：文章內頁的背景是靜止的純底色
-    const reading = !isFrontRoute(new URL(window.location.href));
-    window.__dither?.setReading(reading);
   });
 
   document.addEventListener('astro:page-load', () => {

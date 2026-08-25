@@ -12,11 +12,10 @@ interface Props {
   /** 不含語言前綴的正規路徑，例如 /writing */
   path: string;
   current: 'home' | 'writing' | 'about';
-  front?: boolean;
   /**
-   * 這個路由會播放入侵序列（只有首頁兩個語言版本是 true）。跟 `front` 分開：
-   * `front` 只表示「這條路由可能載入 WebGL」，About、Writing 索引與標籤頁都是
-   * `front=true` 但沒有序列——`seq-pending` 只能由真的會有人來解除它的頁面設定。
+   * 這個路由會播放入侵序列（只有首頁兩個語言版本是 true）：`seq-pending` 只能
+   * 由真的會有人來解除它的頁面設定。門面／閱讀的分界不靠 prop，靠
+   * `src/lib/routes.ts` 的路由判定——執行期換頁時才有辦法重新決定。
    */
   sequence?: boolean;
   /**
@@ -27,12 +26,12 @@ interface Props {
   availableLocales?: Locale[];
 }
 
-const { locale, title, description, path, current, front = false, sequence = false, availableLocales } = Astro.props;
+const { locale, title, description, path, current, sequence = false, availableLocales } = Astro.props;
 const alternates = alternateHreflang(path, availableLocales);
 const htmlLang = locale === 'zh' ? 'zh-Hant' : 'en';
 ---
 
-<html lang={htmlLang} data-front={front ? 'true' : undefined}>
+<html lang={htmlLang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

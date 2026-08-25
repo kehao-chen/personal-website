@@ -12,8 +12,8 @@ interface Props {
 }
 const props = Astro.props;
 ---
-<!-- front=false：這條路徑不會載入 three.js -->
-<BaseLayout {...props} front={false}>
+<!-- 這條路徑不放 SiteDither 的進入點，新載入時不會載入 three.js -->
+<BaseLayout {...props}>
   <slot name="head" slot="head" />
   <slot />
 </BaseLayout>

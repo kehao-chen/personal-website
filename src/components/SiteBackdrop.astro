@@ -1,51 +1,9 @@
 ---
 // 門面路由（非首頁）的安靜背景。沒有序列、沒有字標。
+// 真正決定「這條路由該長什麼樣」的是 site-dither——它跨換頁只有一個擁有者，
+// 這裡只負責讓那個擁有者在這條路由上被啟動。
 ---
 <script>
-  import { IDLE_FRAME } from '../lib/sequence/timeline';
-  import type { DitherHandle } from '../lib/dither';
-
-  async function boot(): Promise<void> {
-    // 防禦性清除：這條路由不傳 `sequence` 給 BaseLayout，所以 <head> 的同步
-    // inline script 理論上不會加上 seq-pending。但這裡沒有任何東西會播完序列
-    // 去解除它，一旦哪個未來的路由不小心誤傳 sequence，這行能避免內容被
-    // 不透明的 #fx 永遠蓋住——成本是零，留著當保險。
-    document.documentElement.classList.remove('seq-pending');
-
-    const canvas = document.getElementById('dither-canvas') as HTMLCanvasElement | null;
-    if (!canvas) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    try {
-      const probe = document.createElement('canvas');
-      if (!(probe.getContext('webgl2') ?? probe.getContext('webgl'))) return;
-    } catch {
-      return;
-    }
-
-    const { createDither } = await import('../lib/dither');
-    const styles = getComputedStyle(document.documentElement);
-    const handle: DitherHandle = createDither(canvas, {
-      ground: styles.getPropertyValue('--ground').trim(),
-      ink: styles.getPropertyValue('--ink').trim(),
-      accent: styles.getPropertyValue('--accent').trim(),
-    });
-    window.__dither = handle;
-
-    // 探測通過但實際建構仍可能失敗：保持安靜背景，不宣告 gl-active
-    if (!handle.active) return;
-
-    document.documentElement.classList.add('gl-active', 'seq-done');
-
-    // 降強度：顆粒與脈衝環減半，場景更淡，字標為 0（字標只屬於首頁）
-    handle.setFrame({
-      ...IDLE_FRAME,
-      grain: 0.01,
-      ring: 0.13,
-      scene: 0.5,
-      wordmark: 0,
-    });
-  }
-
-  void boot();
+  import { initSiteDither } from '../lib/site-dither';
+  initSiteDither();
 </script>

@@ -14,7 +14,7 @@ interface Props {
 }
 const props = Astro.props;
 ---
-<BaseLayout {...props} front={true}>
+<BaseLayout {...props}>
   <slot name="head" slot="head" />
   <slot />
 </BaseLayout>

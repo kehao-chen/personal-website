@@ -191,7 +191,18 @@ export function createDither(
       active: true,
       setFrame(next) { frame = next; },
       burst() { burstStart = performance.now(); },
-      setReading(next) { reading = next; },
+      setReading(next) {
+        // 只是停止算繪的話，最後一幀會留在畫布上凍住（換頁進文章時就是文字底下
+        // 那一層殘影）。進入閱讀模式時必須主動把畫布清成純底色。
+        // 不能改用「數值歸零再畫一幀」代替：step(bayer4(cell), 0) 仍會點亮所有
+        // 門檻為 0 的格子，得到的是稀疏墨點網格而不是乾淨底色。
+        if (next && !reading) {
+          activeRenderer.setRenderTarget(null);
+          activeRenderer.setClearColor(new THREE.Color(ground), 1);
+          activeRenderer.clear();
+        }
+        reading = next;
+      },
       destroy() {
         running = false;
         cancelAnimationFrame(rafId);
