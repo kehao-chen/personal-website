@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { loadedThreeJs } from './support/detect-three';
 
 test.describe('關閉 JavaScript', () => {
   test.use({ javaScriptEnabled: false });
@@ -24,7 +25,8 @@ test.describe('關閉 JavaScript', () => {
 
   test('文章索引列出文章', async ({ page }) => {
     await page.goto('/writing/');
-    await expect(page.locator('.post-row')).toHaveCount(1);
+    // 目前英文有兩篇文章（見 navigation.spec.ts 的標籤篩選測試，同樣依賴這個數字）
+    await expect(page.locator('.post-row')).toHaveCount(2);
   });
 });
 
@@ -46,6 +48,44 @@ test.describe('prefers-reduced-motion', () => {
     await expect(page.locator('main.page')).toBeVisible();
     await expect(page.locator('html')).not.toHaveClass(/gl-active/);
     await expect(page.locator('html')).not.toHaveClass(/seq-pending/);
+  });
+});
+
+test.describe('沒有 WebGL', () => {
+  test.beforeEach(async ({ page }) => {
+    // 在任何頁面腳本執行之前就讓 WebGL context 探測失敗，模擬真的沒有 WebGL
+    // 的裝置／瀏覽器（而不是依賴「跑測試的這台機器剛好沒有 WebGL」這種環境
+    // 巧合——換到一台真的有 WebGL 的 CI runner 上，這條退化路徑一樣測得到）。
+    await page.addInitScript(() => {
+      // 原生 getContext 是多載簽章，這裡故意把它當成寬鬆的 unknown[] 函式看待，
+      // 純粹是為了攔截 webgl/webgl2，不需要真的重現它完整的多載型別。
+      const proto = HTMLCanvasElement.prototype as unknown as {
+        getContext: (...args: unknown[]) => unknown;
+      };
+      const original = proto.getContext;
+      proto.getContext = function (this: HTMLCanvasElement, ...args: unknown[]) {
+        if (args[0] === 'webgl' || args[0] === 'webgl2') return null;
+        return original.apply(this, args);
+      };
+    });
+  });
+
+  /**
+   * Ruling 3：`createDither` 不會丟例外；沒有 WebGL 時整個序列都不啟動，
+   * `window.__dither` 維持 `undefined`，字標留在 DOM 上，內容照常可讀。
+   */
+  test('入侵序列整個略過，字標與內容照常可見，且不會偷跑 three.js', async ({ page }) => {
+    const found = await loadedThreeJs(page, '/');
+    expect(found, '沒有 WebGL 時不應該連 three.js 都下載').toBe(false);
+
+    await expect(page.locator('.wordmark')).toBeVisible();
+    await expect(page.locator('.wordmark')).toContainText('KEHAO');
+    await expect(page.locator('main.page')).toBeVisible();
+    await expect(page.locator('html')).not.toHaveClass(/gl-active/);
+    await expect(page.locator('html')).not.toHaveClass(/seq-pending/);
+
+    const ditherHandle = await page.evaluate(() => window.__dither);
+    expect(ditherHandle, 'window.__dither 應該維持 undefined').toBeUndefined();
   });
 });
 
