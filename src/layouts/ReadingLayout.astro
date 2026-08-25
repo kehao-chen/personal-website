@@ -8,6 +8,7 @@ interface Props {
   description: string;
   path: string;
   current: 'home' | 'writing' | 'about';
+  availableLocales?: Locale[];
 }
 const props = Astro.props;
 ---

@@ -12,10 +12,16 @@ interface Props {
   path: string;
   current: 'home' | 'writing' | 'about';
   front?: boolean;
+  /**
+   * 實際存在對應頁面的語言集合。預設為全部語言（首頁、about、writing 索引頁
+   * 兩種語言都存在）。標籤頁與文章頁的手足 URL 不保證存在，那些頁面要傳入只
+   * 含真的存在的語言，避免產生指向 404 的 hreflang。
+   */
+  availableLocales?: Locale[];
 }
 
-const { locale, title, description, path, current, front = false } = Astro.props;
-const alternates = alternateHreflang(path);
+const { locale, title, description, path, current, front = false, availableLocales } = Astro.props;
+const alternates = alternateHreflang(path, availableLocales);
 const htmlLang = locale === 'zh' ? 'zh-Hant' : 'en';
 ---
 

@@ -71,6 +71,19 @@ describe('alternateHreflang', () => {
       { hreflang: 'x-default', href: '/about' },
     ]);
   });
+
+  it('可用語言只有 en 時，只產生 en 與 x-default', () => {
+    expect(alternateHreflang('/writing/tag/architecture', ['en'])).toEqual([
+      { hreflang: 'en', href: '/writing/tag/architecture' },
+      { hreflang: 'x-default', href: '/writing/tag/architecture' },
+    ]);
+  });
+
+  it('可用語言只有 zh 時，不產生 x-default（預設語言頁面不存在）', () => {
+    expect(alternateHreflang('/zh/writing/tag/aks', ['zh'])).toEqual([
+      { hreflang: 'zh-Hant', href: '/zh/writing/tag/aks' },
+    ]);
+  });
 });
 
 describe('DEFAULT_LOCALE', () => {

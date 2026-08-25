@@ -3,7 +3,7 @@ import FrontLayout from '../../../../layouts/FrontLayout.astro';
 import TerminalWindow from '../../../../components/TerminalWindow.astro';
 import PostRow from '../../../../components/PostRow.astro';
 import TagFilter from '../../../../components/TagFilter.astro';
-import { loadPosts, sortByDate, filterByLocale, filterByTag, collectTags } from '../../../../lib/posts';
+import { loadPosts, sortByDate, filterByLocale, filterByTag, collectTags, type Locale } from '../../../../lib/posts';
 import { localizePath } from '../../../../lib/i18n/routing';
 import { t } from '../../../../lib/i18n/ui';
 
@@ -21,13 +21,20 @@ const all = await loadPosts();
 const localePosts = filterByLocale(all, 'zh');
 const posts = sortByDate(filterByTag(localePosts, tag));
 const tags = collectTags(localePosts);
+
+// en 手足頁只在該 tag 於 en 也存在時才會被 getStaticPaths 產生，hreflang 不能
+// 指向一個不存在的頁面。
+const enTags = collectTags(filterByLocale(all, 'en'));
+const hasEn = enTags.some((other) => other.toLowerCase() === tag.toLowerCase());
+const availableLocales: Locale[] = hasEn ? ['en', 'zh'] : ['zh'];
 ---
 <FrontLayout
   locale="zh"
-  title={`Writing · ${tag} — KEHAO`}
-  description={`Posts tagged ${tag}.`}
+  title={`文章 · ${tag} — KEHAO`}
+  description={`標籤為 ${tag} 的文章。`}
   path={`/writing/tag/${tag.toLowerCase()}`}
   current="writing"
+  availableLocales={availableLocales}
 >
   <main class="page layout-list">
     <TerminalWindow
