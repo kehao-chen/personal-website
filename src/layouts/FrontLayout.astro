@@ -8,6 +8,8 @@ interface Props {
   description: string;
   path: string;
   current: 'home' | 'writing' | 'about';
+  /** 只有首頁兩個語言版本傳 true——只有它們會播放入侵序列。 */
+  sequence?: boolean;
   availableLocales?: Locale[];
 }
 const props = Astro.props;

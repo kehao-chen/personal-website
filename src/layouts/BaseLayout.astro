@@ -13,6 +13,12 @@ interface Props {
   current: 'home' | 'writing' | 'about';
   front?: boolean;
   /**
+   * 這個路由會播放入侵序列（只有首頁兩個語言版本是 true）。跟 `front` 分開：
+   * `front` 只表示「這條路由可能載入 WebGL」，About、Writing 索引與標籤頁都是
+   * `front=true` 但沒有序列——`seq-pending` 只能由真的會有人來解除它的頁面設定。
+   */
+  sequence?: boolean;
+  /**
    * 實際存在對應頁面的語言集合。預設為全部語言（首頁、about、writing 索引頁
    * 兩種語言都存在）。標籤頁與文章頁的手足 URL 不保證存在，那些頁面要傳入只
    * 含真的存在的語言，避免產生指向 404 的 hreflang。
@@ -20,7 +26,7 @@ interface Props {
   availableLocales?: Locale[];
 }
 
-const { locale, title, description, path, current, front = false, availableLocales } = Astro.props;
+const { locale, title, description, path, current, front = false, sequence = false, availableLocales } = Astro.props;
 const alternates = alternateHreflang(path, availableLocales);
 const htmlLang = locale === 'zh' ? 'zh-Hant' : 'en';
 ---
@@ -38,7 +44,7 @@ const htmlLang = locale === 'zh' ? 'zh-Hant' : 'en';
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    {front && (
+    {sequence && (
       <script is:inline>
         (function () {
           try {

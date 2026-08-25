@@ -6,10 +6,10 @@
   import type { DitherHandle } from '../lib/dither';
 
   async function boot(): Promise<void> {
-    // 這條路由沒有入侵序列，不該被 <head> 的同步 inline script 加上的
-    // seq-pending 卡住——那個 class 只該由播序列的頁面自己解除。先解掉，
-    // 避免使用者在全新 session 直接進 /about 或 /writing 時，內容被
-    // 不透明的 #fx 永遠蓋住（探測/初始化 WebGL 期間也一樣）。
+    // 防禦性清除：這條路由不傳 `sequence` 給 BaseLayout，所以 <head> 的同步
+    // inline script 理論上不會加上 seq-pending。但這裡沒有任何東西會播完序列
+    // 去解除它，一旦哪個未來的路由不小心誤傳 sequence，這行能避免內容被
+    // 不透明的 #fx 永遠蓋住——成本是零，留著當保險。
     document.documentElement.classList.remove('seq-pending');
 
     const canvas = document.getElementById('dither-canvas') as HTMLCanvasElement | null;

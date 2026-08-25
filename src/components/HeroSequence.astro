@@ -31,7 +31,26 @@ const { locale } = Astro.props;
     }
   }
 
-  /** 無 WebGL 可用（探測失敗，或探測通過但實際初始化仍失敗）：走同一條退化路徑 */
+  /** sessionStorage 可能被封鎖（例如封鎖第三方/全部網站資料的瀏覽器設定）；
+   *  封鎖時視為「還沒播過」，序列照常播一次即可，不讓例外穿出 boot()。 */
+  function hasPlayed(): boolean {
+    try {
+      return sessionStorage.getItem(SESSION_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  function markPlayed(): void {
+    try {
+      sessionStorage.setItem(SESSION_KEY, '1');
+    } catch {
+      /* 封鎖時不記錄，下次重新整理會再播一次——可接受 */
+    }
+  }
+
+  /** 完全略過：不下載 three.js、不啟動 WebGL、DOM 字標留在畫面上，網站照常運作。
+   *  無 WebGL、探測通過但實際初始化仍失敗、以及「減少動態效果」都走這條路徑。 */
   function fallBackToStatic(): void {
     document.documentElement.classList.remove('seq-pending');
     bootLog?.remove();
@@ -43,8 +62,8 @@ const { locale } = Astro.props;
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // 無 WebGL：不下載 three.js，DOM 字標留在畫面上，網站照常運作
-    if (!supportsWebGL(document.createElement('canvas'))) {
+    // 「減少動態效果」或無 WebGL：完全不碰 three.js，跟 SiteBackdrop 一致
+    if (reduced || !supportsWebGL(document.createElement('canvas'))) {
       fallBackToStatic();
       return;
     }
@@ -69,10 +88,7 @@ const { locale } = Astro.props;
 
     document.documentElement.classList.add('gl-active');
 
-    const alreadyPlayed = sessionStorage.getItem(SESSION_KEY) === '1';
-    const skipSequence = reduced || alreadyPlayed;
-
-    if (skipSequence) {
+    if (hasPlayed()) {
       handle.setFrame(IDLE_FRAME);
       document.documentElement.classList.remove('seq-pending');
       document.documentElement.classList.add('seq-done');
@@ -114,7 +130,7 @@ const { locale } = Astro.props;
 
       if (frame.phase === 'idle') {
         finished = true;
-        sessionStorage.setItem(SESSION_KEY, '1');
+        markPlayed();
         document.documentElement.classList.add('seq-done');
         bootLog?.remove();
         skipHint?.remove();
