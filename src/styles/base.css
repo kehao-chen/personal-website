@@ -360,3 +360,82 @@ html.seq-pending::after {
 @media (prefers-reduced-motion: reduce) {
   .fx-layer { display: none; }
 }
+
+/* ============================== 窄畫面 ==============================
+   單一斷點。導覽列在 ~520px 以下裝不下，內文欄在 640px 以下被 padding
+   吃掉四成寬度——640px 一刀切乾淨，桌面與平板完全不受影響。
+
+   WebGL 那一側由 lib/dither/framing.ts 依長寬比重新取景，兩邊都收斂，
+   字標才不會一個縮了一個沒縮。 */
+@media (max-width: 640px) {
+  .page { padding: 5.6rem 1.1rem 2.4rem; }
+
+  /* --- 導覽：品牌自己一行，連結換到第二行 --- */
+  .site-nav {
+    flex-wrap: wrap;
+    /* row-gap 要大於點擊區的一半（22px），兩行的點擊區才不會互相重疊 */
+    gap: 1.35rem 1.1rem;
+    padding: 0.8rem 1.1rem 0.7rem;
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+  }
+  .site-nav .brand {
+    flex: 0 0 100%;
+    margin-right: 0;
+  }
+
+  /* 點擊區補到 44px 高，但不撐開視覺盒——底線要貼著文字，
+     所以用覆蓋式的 ::after 放大熱區，而不是加 min-height。 */
+  .site-nav a { position: relative; }
+  .site-nav a::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    height: 44px;
+    transform: translateY(-50%);
+  }
+
+  /* --- 首頁：字標在上、終端機視窗在下，不再互相疊 --- */
+  .wordmark {
+    /* 與 framing.ts 的 portraitLift 對齊：中心落在畫面高度 32% 處 */
+    top: 32%;
+    transform: translateY(-50%);
+  }
+  .wordmark-sub { letter-spacing: 0.34em; }
+
+  .layout-front {
+    display: block;
+    min-height: 0;
+    /* 讓出上半部給字標 */
+    padding-top: 46vh;
+  }
+  .layout-front .win { width: 100%; }
+  .layout-front .win-body { padding: 1rem 1.1rem; font-size: 0.8rem; line-height: 1.85; }
+
+  /* --- 終端機視窗：把被 padding 吃掉的寬度還給內容 --- */
+  .win-bar, .win-foot { flex-wrap: wrap; gap: 0.45rem 0.7rem; }
+  .win-meta, .win-deco { margin-left: 0; }
+  .win-body { padding: 1rem 1.1rem; }
+  .win-body.prose { padding: 1.5rem 1.2rem 1.8rem; }
+
+  .prose h1 { font-size: 1.55rem; line-height: 1.38; }
+  .prose h2 { font-size: 1.05rem; margin-top: 2.1rem; }
+  .prose p, .prose li { line-height: 1.9; }
+  /* 手機上沒有滑鼠可以指出「這塊還能往右捲」，內距收窄一點讓截斷更明顯 */
+  .prose pre { padding: 0.85rem 0.95rem; }
+
+  /* --- 文章列與標籤：點擊區補到 24px 以上 --- */
+  .post-row { padding: 0.9rem 1.1rem; }
+  .tag-filter { padding: 0.8rem 1.1rem; }
+  .tag { padding: 0.45rem 0.6rem; }
+
+  /* --- 入侵序列的兩行 chrome 跟著內距收窄 --- */
+  #boot-log {
+    left: 1.1rem;
+    top: 1.9rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+  }
+  #skip-hint { right: 1.1rem; bottom: 1.5rem; }
+}
