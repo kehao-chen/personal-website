@@ -1,0 +1,46 @@
+import type { Locale } from '../posts';
+
+const STRINGS = {
+  en: {
+    'nav.home': 'HOME',
+    'nav.writing': 'WRITING',
+    'nav.about': 'ABOUT',
+    'writing.heading': 'WRITING',
+    'writing.count': 'POSTS',
+    'writing.allTags': 'ALL',
+    'writing.empty': 'No posts match this tag.',
+    'post.readingTime': 'MIN',
+    'post.translationAvailable': 'Also available in 中文',
+    'post.onlyLanguage': 'This post is only available in its original language.',
+    'window.eof': 'EOF',
+    'window.linkOk': 'LINK OK',
+    'skip.sequence': 'CLICK / ANY KEY TO SKIP',
+    'error.404.title': 'SEGMENT NOT FOUND',
+    'error.404.body': 'That path does not exist on this host.',
+    'error.404.back': 'RETURN TO ROOT',
+  },
+  zh: {
+    'nav.home': 'HOME',
+    'nav.writing': 'WRITING',
+    'nav.about': 'ABOUT',
+    'writing.heading': 'WRITING',
+    'writing.count': '篇',
+    'writing.allTags': '全部',
+    'writing.empty': '沒有符合這個標籤的文章。',
+    'post.readingTime': '分鐘',
+    'post.translationAvailable': '本篇另有 English 版本',
+    'post.onlyLanguage': '本篇僅有原文版本。',
+    'window.eof': 'EOF',
+    'window.linkOk': 'LINK OK',
+    'skip.sequence': '點擊或按任意鍵跳過',
+    'error.404.title': 'SEGMENT NOT FOUND',
+    'error.404.body': '這個路徑在這台主機上不存在。',
+    'error.404.back': '回到根目錄',
+  },
+} as const;
+
+export type UiKey = keyof (typeof STRINGS)['en'];
+
+export function t(locale: Locale, key: UiKey): string {
+  return STRINGS[locale][key];
+}
