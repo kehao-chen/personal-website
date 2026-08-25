@@ -19,17 +19,32 @@ test('中文首頁同樣使用 vim 視窗', async ({ page }) => {
 
 test('行號由 CSS 生成，不進無障礙樹也不進文字內容', async ({ page }) => {
   await page.goto('/');
-  // textContent 不含行號：行號是 ::before 的 content
+
+  // 邏輯行數與內容驗證
+  const lines = page.locator('.vim-line');
+  await expect(lines).toHaveCount(5);
+
+  // 行號不進文字內容：textContent 不含行號數字
   const bodyText = await page.locator('.vim-body').textContent();
   expect(bodyText).not.toMatch(/^\s*1\s/);
 
-  // 但視覺上要看得到，且與邏輯行數一致
-  const lines = page.locator('.vim-line');
-  await expect(lines).toHaveCount(5);
-  const firstNumber = await lines.first().evaluate(
+  // 行號由 CSS counter 生成的證據：
+  // Chromium 的 getComputedStyle() 不解析 counter()，回傳字面的 "counter(vimline)"。
+  // 但回傳 "counter(vimline)" 而非 "none" 就證明了規則有被套用到該元素上。
+  // 如果有人不小心刪掉 .vim-line::before 或改壞選擇器，它就會變成 "none"。
+  const firstBeforeContent = await lines.first().evaluate(
     (el) => getComputedStyle(el, '::before').content,
   );
-  expect(firstNumber).toContain('1');
+  expect(firstBeforeContent).not.toBe('none');
+  expect(firstBeforeContent).toContain('counter');
+
+  // 進一步確認 counter-increment 有設到 vimline
+  const hasCounterIncrement = await lines.first().evaluate((el) => {
+    const computed = getComputedStyle(el);
+    // counter-increment 在 computed style 中會顯示為 "vimline 1" 或類似格式
+    return computed.counterIncrement !== 'none' && computed.counterIncrement !== '';
+  });
+  expect(hasCounterIncrement).toBe(true);
 });
 
 test('首頁不再有舊的終端機視窗', async ({ page }) => {
