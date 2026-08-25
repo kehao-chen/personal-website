@@ -1,0 +1,25 @@
+---
+interface Props {
+  /** 標題列與底部列顯示的檔案路徑，例如 ~/.profile */
+  path: string;
+  /** 給 aria-controls 用；有桌面圖示要控制這個視窗時才需要 */
+  id?: string;
+  /** [x] 的無障礙名稱。窄畫面不顯示按鈕，但名稱仍要正確 */
+  closeLabel: string;
+}
+
+const { path, id, closeLabel } = Astro.props;
+---
+
+<section class="vim" id={id} aria-label={path}>
+  <header class="vim-bar">
+    <span class="vim-path">{path}</span>
+    <button type="button" class="vim-close" data-profile-close aria-label={closeLabel}>[x]</button>
+  </header>
+
+  <div class="vim-body">
+    <slot />
+  </div>
+
+  <footer class="vim-foot"><span>{path}</span></footer>
+</section>

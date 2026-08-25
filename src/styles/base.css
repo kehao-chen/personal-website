@@ -122,6 +122,107 @@ a { color: var(--accent); }
 }
 .win-ok { color: var(--accent); }
 
+/* ============================ 編輯器視窗 ============================
+   vim 的視覺語彙：行號欄、~ 填充行、上下兩條檔名列。與 .win 一樣，底是實心
+   ground，背景抖色永遠碰不到文字。 */
+.vim {
+  position: relative;
+  background: var(--ground);
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+}
+.vim::before, .vim::after {
+  content: '';
+  position: absolute;
+  width: 10px; height: 10px;
+  border: 1px solid var(--accent);
+}
+.vim::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+.vim::after { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+.vim-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem 0.85rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 0.63rem;
+  letter-spacing: 0.13em;
+}
+.vim-path { color: var(--muted); }
+
+.vim-close {
+  position: relative;
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--muted);
+  cursor: pointer;
+}
+.vim-close:hover, .vim-close:focus-visible { color: var(--accent); }
+
+/* 熱區補到 24px（WCAG 2.5.8）。與導覽列同一個手法：用覆蓋式 ::after 放大可點
+   範圍，不加 min-height——標題列的高度是由字級決定的，撐開會破壞 chrome 比例。 */
+.vim-close::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 24px);
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+/* 行號欄寬度：兩位數 + 間距。行號用 ::before 絕對定位，所以換行的續行不會
+   再拿到一個號碼——這正是 vim 開了 `set number` 之後的行為。 */
+.vim-body {
+  --gutter: 2.6rem;
+  position: relative;
+  counter-reset: vimline;
+  padding: 1.1rem 1.3rem 1.1rem calc(1.3rem + var(--gutter));
+  font-size: 0.83rem;
+  line-height: 1.95;
+  overflow: hidden;
+}
+.vim-line {
+  position: relative;
+  counter-increment: vimline;
+  margin: 0;
+  /* 空行也要佔一行高，否則行號會擠在一起 */
+  min-height: 1.95em;
+}
+.vim-line::before {
+  content: counter(vimline, decimal);
+  position: absolute;
+  left: calc(-1 * var(--gutter));
+  width: calc(var(--gutter) - 0.8rem);
+  text-align: right;
+  color: var(--muted);
+}
+
+/* ~ 填充行：CSS 生成，不寫進 HTML——它是「檔案結束後的空白」這個 vim 慣例的
+   視覺表現，不是內容。父層 overflow: hidden 負責裁掉多出來的。 */
+.vim-body::after {
+  content: '~\A~\A~\A~';
+  display: block;
+  white-space: pre;
+  margin-left: calc(-1 * var(--gutter));
+  color: var(--muted);
+}
+
+.vim-foot {
+  display: flex;
+  padding: 0.45rem 0.85rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
 /* ============================ 內文排版 ============================ */
 .win-body.prose {
   padding: 2.4rem 2.6rem 2.8rem;
@@ -208,8 +309,7 @@ a { color: var(--accent); }
 }
 /* ============================== 版面 ============================== */
 .layout-front { display: flex; align-items: flex-end; min-height: calc(100vh - 8rem); }
-.layout-front .win { width: min(580px, 54vw); }
-.layout-front .win-body { padding: 1.1rem 1.3rem; font-size: 0.83rem; line-height: 1.95; }
+.layout-front .vim { width: min(580px, 54vw); }
 .layout-reading { max-width: 820px; margin: 0 auto; }
 .layout-list { max-width: 860px; margin: 0 auto; }
 
@@ -396,7 +496,7 @@ html.seq-pending::after {
     transform: translateY(-50%);
   }
 
-  /* --- 首頁：字標在上、終端機視窗在下，不再互相疊 --- */
+  /* --- 首頁：字標在上、編輯器視窗在下，不再互相疊 --- */
   .wordmark {
     /* 與 framing.ts 的 portraitLift 對齊：中心落在畫面高度 32% 處 */
     top: 32%;
@@ -410,8 +510,8 @@ html.seq-pending::after {
     /* 讓出上半部給字標 */
     padding-top: 46vh;
   }
-  .layout-front .win { width: 100%; }
-  .layout-front .win-body { padding: 1rem 1.1rem; font-size: 0.8rem; line-height: 1.85; }
+  .layout-front .vim { width: 100%; }
+  .vim-body { padding: 0.9rem 1rem 0.9rem calc(1rem + var(--gutter)); font-size: 0.8rem; }
 
   /* --- 終端機視窗：把被 padding 吃掉的寬度還給內容 --- */
   .win-bar, .win-foot { flex-wrap: wrap; gap: 0.45rem 0.7rem; }

@@ -15,6 +15,8 @@ const STRINGS = {
     'error.404.title': 'SEGMENT NOT FOUND',
     'error.404.body': 'That path does not exist on this host.',
     'error.404.back': 'RETURN TO ROOT',
+    'profile.open': 'Open ~/.profile',
+    'profile.close': 'Close ~/.profile',
   },
   zh: {
     'nav.home': 'HOME',
@@ -30,6 +32,8 @@ const STRINGS = {
     'error.404.title': 'SEGMENT NOT FOUND',
     'error.404.body': '這個路徑在這台主機上不存在。',
     'error.404.back': '回到根目錄',
+    'profile.open': '開啟 ~/.profile',
+    'profile.close': '關閉 ~/.profile',
   },
 } as const;
 

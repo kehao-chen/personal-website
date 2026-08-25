@@ -83,20 +83,20 @@ test('導覽列連結的點擊區高度達到 WCAG 2.5.8 的 24px', async ({ pag
   }
 });
 
-test('首頁的字標與終端機視窗不重疊', async ({ page }) => {
+test('首頁的字標與編輯器視窗不重疊', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('html')).toHaveClass(/seq-done/, { timeout: 10_000 });
 
   const wordmark = await page.locator('.wordmark').boundingBox();
-  const win = await page.locator('.layout-front .win').boundingBox();
+  const win = await page.locator('.layout-front .vim').boundingBox();
   expect(wordmark).not.toBeNull();
   expect(win).not.toBeNull();
 
-  // 桌面版是 flex-end 疊在背景上；窄畫面必須改成上下堆疊，否則終端機視窗
+  // 桌面版是 flex-end 疊在背景上；窄畫面必須改成上下堆疊，否則編輯器視窗
   // 會蓋在 KEHAO 上，看起來像 render 壞掉。
   expect(
     wordmark!.y + wordmark!.height,
-    '字標的底部應該在終端機視窗上緣之上',
+    '字標的底部應該在編輯器視窗上緣之上',
   ).toBeLessThanOrEqual(win!.y);
 });
 

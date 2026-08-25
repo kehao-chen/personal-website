@@ -1,8 +1,9 @@
 ---
 import FrontLayout from '../layouts/FrontLayout.astro';
-import TerminalWindow from '../components/TerminalWindow.astro';
+import VimWindow from '../components/VimWindow.astro';
 import Wordmark from '../components/Wordmark.astro';
 import HeroSequence from '../components/HeroSequence.astro';
+import { t } from '../lib/i18n/ui';
 ---
 <FrontLayout
   locale="en"
@@ -15,19 +16,12 @@ import HeroSequence from '../components/HeroSequence.astro';
   <Wordmark />
   <HeroSequence locale="en" />
   <main class="page layout-front">
-    <TerminalWindow
-      path="guest@happyhacking:~"
-      deco="SSH · 80×24"
-      footLeft="LINK OK"
-      footItems={['LATENCY 12ms', 'UTF-8']}
-    >
-      <p class="cmd">$ <b>cat ~/.profile</b></p>
-      <p>
-        Cloud-native &amp; AI infrastructure. I build the boring parts that let
-        the interesting parts stay up.<br />
-        <span class="soft">Notes mostly in 中文, occasionally English.</span>
-      </p>
-      <p class="soft">STATUS <span class="hot">ONLINE</span> · TAIPEI · AZURE / KUBERNETES / LLM AGENTS</p>
-    </TerminalWindow>
+    <VimWindow path="~/.profile" closeLabel={t('en', 'profile.close')}>
+      <p class="vim-line">Cloud-native &amp; AI infrastructure. I build the boring parts that let the interesting parts stay up.</p>
+      <p class="vim-line"></p>
+      <p class="vim-line soft">Notes mostly in 中文, occasionally English.</p>
+      <p class="vim-line"></p>
+      <p class="vim-line soft">STATUS <span class="hot">ONLINE</span> · TAIPEI · AZURE / KUBERNETES / LLM AGENTS</p>
+    </VimWindow>
   </main>
 </FrontLayout>
