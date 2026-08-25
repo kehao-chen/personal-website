@@ -77,8 +77,15 @@ describe('配色 token', () => {
     expect(contrast(resolve(tokens['--muted'], ground), ground)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('裝飾性 chrome 至少達 AA Large（≥ 3:1）', () => {
-    expect(contrast(resolve(tokens['--dim'], ground), ground)).toBeGreaterThanOrEqual(3);
+  /*
+   * --dim 唯一的消費者是 .win-deco，而它坐在 .win-bar 的 --panel 上，不是 --ground。
+   * 原本只驗 --ground 是漏的：真正的底色沒被驗到，而且裝飾文字在 WCAG 沒有豁免，
+   * 一樣要 4.5:1。這個缺陷躲過了十四個 task，直到窄畫面把它拉回視窗內才被 axe 抓到。
+   */
+  it('裝飾性 chrome 在自己的底色上達 AA（≥ 4.5:1）', () => {
+    const panel = resolve(tokens['--panel'], ground);
+    expect(contrast(resolve(tokens['--dim'], panel), panel)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(resolve(tokens['--dim'], ground), ground)).toBeGreaterThanOrEqual(4.5);
   });
 
   it('不得出現任何被授權限制的主題名稱', () => {
