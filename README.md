@@ -46,7 +46,8 @@ translationKey: "optional-shared-key"   # 有中英兩版時填相同的值
 
 ## 部署
 
-Cloudflare Pages，透過 `wrangler` 部署：
+Cloudflare Pages 專案 `happyhacking-ninja`。此 repo 目前沒有 remote，專案也
+沒有接 Git 整合，所以是手動部署，每次要上線就手動跑一次：
 
 ```bash
 npm run build
@@ -57,3 +58,13 @@ npx wrangler pages deploy dist --project-name=happyhacking-ninja
 - Build output directory：`dist`
 - Node version：22（`NODE_VERSION` 環境變數）
 - Production branch：`main`
+- 目前對外服務網址：https://happyhacking-ninja.pages.dev
+
+**自訂網域尚未接上。** `happyhacking.ninja` 與 `www.happyhacking.ninja`
+目前正在服務一個既有的 Hugo 網站，接上這個新專案會立刻蓋掉那個網站。
+確認舊站已處理好之後，再執行：
+
+```bash
+npx wrangler pages domain add happyhacking-ninja happyhacking.ninja
+npx wrangler pages domain add happyhacking-ninja www.happyhacking.ninja
+```
