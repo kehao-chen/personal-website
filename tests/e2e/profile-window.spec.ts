@@ -17,7 +17,7 @@ test('中文首頁同樣使用 vim 視窗', async ({ page }) => {
   await expect(win).toContainText('我做雲端基礎建設');
 });
 
-test('行號由 CSS 生成，不進無障礙樹也不進文字內容', async ({ page }) => {
+test('CSS counter 規則產生邏輯行號，不進無障礙樹也不進文字內容', async ({ page }) => {
   await page.goto('/');
 
   // 邏輯行數與內容驗證
@@ -28,23 +28,32 @@ test('行號由 CSS 生成，不進無障礙樹也不進文字內容', async ({ 
   const bodyText = await page.locator('.vim-body').textContent();
   expect(bodyText).not.toMatch(/^\s*1\s/);
 
-  // 行號由 CSS counter 生成的證據：
-  // Chromium 的 getComputedStyle() 不解析 counter()，回傳字面的 "counter(vimline)"。
-  // 但回傳 "counter(vimline)" 而非 "none" 就證明了規則有被套用到該元素上。
-  // 如果有人不小心刪掉 .vim-line::before 或改壞選擇器，它就會變成 "none"。
+  // 驗證行號的 CSS counter 規則存在且參數正確。
+  // 注意：這個測試驗的是「產生行號的 CSS 規則」，不是「渲染出來的數字長什麼樣」。
+  // 後者需要視覺回歸基準圖，對這個規模不成比例。但這組規則足以捕捉常見的 bug：
+  // 1. 整條規則被刪掉 → counterReset / counterIncrement 會變成 'none'
+  // 2. counter-reset 的起始值改錯（例如 41 而非 0） → counterReset 可見
+  // 3. counter-increment 的步進改錯 → counterIncrement 可見
+
+  // counter-reset 與 counter-increment 的值在 computed style 裡是解析過的（不像 content
+  // 裡的 counter() 函數被 Chromium 不解析），所以能被斷言。
+  const counterReset = await page.locator('.vim-body').evaluate(
+    (el) => getComputedStyle(el).counterReset,
+  );
+  expect(counterReset).toBe('vimline 0');
+
+  const counterIncrement = await lines.first().evaluate(
+    (el) => getComputedStyle(el).counterIncrement,
+  );
+  expect(counterIncrement).toBe('vimline 1');
+
+  // 補充確認 ::before 偽元素的 content 規則存在
+  // (Chromium 不解析函數值 "counter(vimline)"，但 "counter(...)" 不是 "none" 就證明規則有效)
   const firstBeforeContent = await lines.first().evaluate(
     (el) => getComputedStyle(el, '::before').content,
   );
   expect(firstBeforeContent).not.toBe('none');
   expect(firstBeforeContent).toContain('counter');
-
-  // 進一步確認 counter-increment 有設到 vimline
-  const hasCounterIncrement = await lines.first().evaluate((el) => {
-    const computed = getComputedStyle(el);
-    // counter-increment 在 computed style 中會顯示為 "vimline 1" 或類似格式
-    return computed.counterIncrement !== 'none' && computed.counterIncrement !== '';
-  });
-  expect(hasCounterIncrement).toBe(true);
 });
 
 test('首頁不再有舊的終端機視窗', async ({ page }) => {
