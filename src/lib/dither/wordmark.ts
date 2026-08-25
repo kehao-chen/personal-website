@@ -12,10 +12,12 @@ function textPlane({ width, height, canvasWidth, canvasHeight, draw }: TextPlane
   const canvas = document.createElement('canvas');
   canvas.width = canvasWidth;
   canvas.height = canvasHeight;
-  const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-  draw(ctx, canvasWidth, canvasHeight);
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    draw(ctx, canvasWidth, canvasHeight);
+  }
 
   return new THREE.Mesh(
     new THREE.PlaneGeometry(width, height),
