@@ -1,0 +1,33 @@
+:root {
+  /* 底與墨 */
+  --ground: #22212C;
+  --ink: #F8F8F2;
+  --panel: #1B1A23;
+  --line: #454158;
+
+  /* 強調：只用於狀態指示、視窗角標、連結、ACCESS GRANTED */
+  --accent: #80FFEA;
+
+  /* 次要文字。--dim 僅 3.56:1，只准用於裝飾性 chrome；
+     任何承載資訊的文字一律用 --muted。 */
+  --dim: #7970A9;
+  --muted: rgba(248, 248, 242, 0.62);
+
+  /* 語法高亮：唯一允許出現多色相的地方 */
+  --syntax-keyword: #FF80BF;
+  --syntax-function: #8AFF80;
+  --syntax-string: #FFFF80;
+  --syntax-number: #9580FF;
+  --syntax-comment: #7970A9;
+  --syntax-param: #FFCA80;
+  --syntax-class: #80FFEA;
+
+  /* 字體。中文等寬字在長文閱讀是酷刑，故內文用無襯線。 */
+  --font-mono: ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo,
+               "PingFang TC", "Noto Sans TC", monospace;
+  --font-sans: -apple-system, "Noto Sans TC", "PingFang TC", "SF Pro Text",
+               system-ui, sans-serif;
+
+  /* 動態常數 */
+  --nav-duration: 420ms;
+}
