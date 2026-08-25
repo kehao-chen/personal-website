@@ -311,3 +311,31 @@ html.seq-pending::after {
 @media (prefers-reduced-motion: reduce) {
   #boot-log, #skip-hint { display: none; }
 }
+
+/* ============================ 換頁故障分層 ============================ */
+#fx-layers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.fx-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  /* difference 讓分層維持雙色，不會冒出彩色邊 */
+  mix-blend-mode: difference;
+  will-change: transform, clip-path, opacity;
+}
+
+/* ClientRouter 預設的淡入淡出會與故障打架，關掉。 */
+@view-transition { navigation: auto; }
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-layer { display: none; }
+}
