@@ -15,6 +15,7 @@ export function initNavGlitch(): void {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   let layers: HTMLElement[] = [];
   let rafId = 0;
+  let cleanupTimer = 0;
 
   function clearLayers(): void {
     cancelAnimationFrame(rafId);
@@ -87,7 +88,10 @@ export function initNavGlitch(): void {
   });
 
   document.addEventListener('astro:page-load', () => {
-    // 故障衰減完就清乾淨，避免殘影卡在畫面上
-    setTimeout(clearLayers, DURATION_MS);
+    // 故障衰減完就清乾淨，避免殘影卡在畫面上。
+    // 換掉前一個還沒觸發的計時器——不然它會在下一次換頁的動畫還在跑的時候
+    // 誤觸發 clearLayers()，把新換頁的分層攔腰清掉。
+    clearTimeout(cleanupTimer);
+    cleanupTimer = window.setTimeout(clearLayers, DURATION_MS);
   });
 }
