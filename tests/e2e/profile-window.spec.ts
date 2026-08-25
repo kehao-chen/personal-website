@@ -193,3 +193,26 @@ test('視窗已關閉時，ESC 不會把它打開', async ({ page }) => {
   await page.keyboard.press('Escape');
   await expect(page.locator('#profile-window')).toBeHidden();
 });
+
+test('pendingColon 在換頁後重置，:q 不會誤關新頁面的視窗', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveClass(/seq-done/, { timeout: 10_000 });
+  await expect(page.locator('#profile-window')).toBeVisible();
+
+  // 按 `:` 設置 pendingColon = true
+  await page.keyboard.press(':');
+
+  // 用滑鼠點導覽列離開，不按任何鍵（避免在離開時重置 pendingColon）
+  await page.locator('.site-nav a[href="/writing/"]').click();
+  await expect(page).toHaveURL(/\/writing\/$/);
+
+  // 用滑鼠點回首頁——換頁產生新的 DOM，視窗預設開啟
+  await page.locator('.site-nav .nav-link[href="/"]').click();
+  await expect(page).toHaveURL(/localhost:4321\/$/);
+  await expect(page.locator('#profile-window')).toBeVisible();
+
+  // 按 `q`：如果 pendingColon 沒有正確重置，視窗會被關掉（bug）
+  // 正確的行為是視窗仍然開著，因為 pendingColon 已經在 astro:page-load 時重置
+  await page.keyboard.press('q');
+  await expect(page.locator('#profile-window')).toBeVisible();
+});

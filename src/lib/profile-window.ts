@@ -47,6 +47,8 @@ function onClick(event: MouseEvent): void {
 /**
  * `:q` 需要記住前一個鍵。只保留一個字元的記憶，而且任何非預期的鍵都會清掉它
  * ——不做完整的 vim 命令列解析，那不是這個彩蛋的重點。
+ *
+ * 屬於「當前這一頁的這個視窗」，不該跨換頁存活。astro:page-load 會重置它。
  */
 let pendingColon = false;
 
@@ -73,9 +75,22 @@ function onKeydown(event: KeyboardEvent): void {
   pendingColon = event.key === ':';
 }
 
+/**
+ * 防禦性初始化守衛。這個專案曾經因為模組被多個 chunk 引入導致同一監聽器
+ * 被重複註冊而出 bug（見 src/lib/site-dither.ts 的長註解）。雖然目前架構
+ * 已經排除這個風險，但保留守衛作為未來重構的安全網。
+ */
+let initialised = false;
+
 export function initProfileWindow(): void {
+  if (initialised) return;
+  initialised = true;
+
   // 委派到 document：換頁後 DOM 會被換掉，綁在元素上的 listener 會跟著消失。
   // 委派讓這個模組只需要初始化一次。
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', onKeydown);
+
+  // pendingColon 屬於「當前這一頁的這個視窗」，不該跨換頁存活。
+  document.addEventListener('astro:page-load', () => { pendingColon = false; });
 }
