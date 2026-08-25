@@ -83,9 +83,14 @@
 | 元件 | 職責 | 依賴 |
 |---|---|---|
 | `DesktopIcon.astro` | 桌面圖示。`<button aria-expanded aria-controls>`，≤640px `display: none` | 無 |
-| `VimWindow.astro` | 編輯器 chrome：標題列、行號欄、`~` 填充行、底部檔名列。純呈現，內容走 slot | 無 |
+| `VimWindow.astro` | 編輯器 chrome：標題列（含 `[x]`）、行號欄、`~` 填充行、底部檔名列。純呈現，內容走 slot | 無 |
+| `src/lib/profile-window.ts` | 開關互動：圖示點擊、`[x]` 點擊、鍵盤。切換 wrapper class 並同步 `aria-expanded` | 無 |
 
-`VimWindow` 不知道 `.profile` 的存在，也不知道桌面圖示的存在——它收一個 `path` 與一段內容，畫出一個編輯器。開關狀態由頁面層的 wrapper class 控制，兩個元件都不持有狀態。
+`VimWindow` 不知道 `.profile` 的存在，也不知道桌面圖示的存在——它收一個 `path` 與一段內容，畫出一個編輯器。兩個 `.astro` 元件都不持有狀態：開關是 wrapper 上的一個 class，由 `profile-window.ts` 單獨負責切換。
+
+`[x]` 由 `VimWindow` 畫，但在 ≤640px 以 CSS 隱藏——窄畫面沒有「關閉」這個狀態（§3.2）。
+
+`profile-window.ts` 與 `site-dither.ts`、`nav-glitch.ts` 同層：有 DOM 副作用、沒有純函式可抽，因此不寫單元測試，行為由 e2e 涵蓋。
 
 `~` 填充行由 CSS 生成，不寫進 HTML：它是「檔案結束後的空白」這個 vim 慣例的視覺表現，不是內容。
 
@@ -133,7 +138,7 @@
 **e2e**：
 - 無 JS 時視窗是開的，且 profile 內容在畫面上
 - 點 `[x]` 關閉、點圖示開啟，`aria-expanded` 跟著變
-- ≤640px 沒有圖示，且視窗恆開（沒有任何操作能把它關掉）
+- ≤640px 圖示不可見（`display: none`，仍在 DOM 中——斷言用不可見而非不存在），且視窗恆開：沒有任何可見控制項能把它關掉
 - 序列播放期間視窗不顯示，SETTLE 後出現
 - `ESC` 關閉視窗（桌面）
 - 既有的窄畫面護欄（`mobile-layout.spec.ts`）仍須全綠——特別是「字標與視窗不重疊」
