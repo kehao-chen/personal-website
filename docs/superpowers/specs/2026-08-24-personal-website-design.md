@@ -235,7 +235,7 @@ schema 由 zod 驗證，**不合則 build 失敗**——格式錯誤在建置時
 /404
 ```
 
-標籤篩選在索引頁內以查詢參數處理（`/writing?tag=AZURE`），**不產生獨立路由、不觸發故障轉場**——那是同頁內的篩選，不是路由變化。故障轉場只保留給真正的換頁。
+標籤篩選使用靜態路由 `/writing/tag/<tag>`（與 `/zh/writing/tag/<tag>`）。靜態輸出無法為查詢參數預先產生頁面，所以不用 `?tag=`。這些頁面屬於門面路由，換頁時**會**觸發故障轉場。
 
 `hreflang` 依 `translationKey` 產生。
 
@@ -268,6 +268,18 @@ schema 由 zod 驗證，**不合則 build 失敗**——格式錯誤在建置時
 - `prefers-reduced-motion` 下無動畫
 - **文章內頁的 bundle 不含 three.js** — 這條是防止效能架構被未來的自己破壞的護欄
 - 無 WebGL 時首頁有 DOM 字標，其餘路由沒有
+
+**Lighthouse CI（分數基準）**
+
+目標是**綠色（≥ 0.90），不是滿分**。追 100 會逼你砍掉真正想要的東西；90 是「這個網站沒有明顯毛病」的證明。
+
+- 四個類別（Performance / Accessibility / Best Practices / SEO）皆 ≥ 0.90
+- Core Web Vitals 直接設限，避免加權合成的類別分數藏住單一爛掉的指標：LCP ≤ 2500ms、CLS ≤ 0.1、TBT ≤ 300ms、FCP ≤ 1800ms
+- `color-contrast` 稽核必須滿分——這是配色紀律的第二道防線（第一道是 `tokens.test.ts` 的比值計算）
+- 使用 Lighthouse 預設的行動裝置模擬與網路節流，三次取中位數（分數有雜訊，跑一次會產生隨機失敗的測試）
+- 關閉的稽核必須在 `docs/lighthouse-baseline.md` 寫下原因
+
+**入侵序列不得以 `opacity: 0` 隱藏內容**：Lighthouse 不把透明元素計入 LCP，且該作法會造成「內容閃現後被藏起」。序列改以不透明的 `#fx` 覆蓋內容——內容始終被繪製，視覺上被蓋住，SETTLE 時硬切露出。
 
 ---
 

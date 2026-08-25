@@ -1388,8 +1388,6 @@ const otherLocale: Locale = locale === 'en' ? 'zh' : 'en';
   letter-spacing: 0.5em;
   color: var(--muted);
 }
-html.gl-active .wordmark { opacity: 0; }
-
 /* ============================== 版面 ============================== */
 .layout-front { display: flex; align-items: flex-end; min-height: calc(100vh - 8rem); }
 .layout-front .win { width: min(580px, 54vw); }
@@ -3022,17 +3020,21 @@ git commit -m "feat: 1-bit 抖色渲染器與 shader 一致性測試"
 
 **Files:**
 - Create: `src/components/HeroSequence.astro`
-- Modify: `src/pages/index.astro`
-- Modify: `src/pages/zh/index.astro`
-- Modify: `src/layouts/FrontLayout.astro`
+- Create: `src/components/SiteBackdrop.astro`
+- Create: `src/env.d.ts`
+- Modify: `src/layouts/BaseLayout.astro`
+- Modify: `src/pages/index.astro`、`src/pages/zh/index.astro`
+- Modify: `src/pages/about.astro`、`src/pages/zh/about.astro`
+- Modify: `src/pages/writing/index.astro`、`src/pages/zh/writing/index.astro`
 - Modify: `src/styles/base.css`
 
 **Interfaces:**
 - Consumes: `frameAt` / `bootLinesAt` / `IDLE_FRAME` from Task 8、`createDither` from Task 9
 - Produces:
-  - `HeroSequence.astro` props：`{ locale: Locale }`
+  - `HeroSequence.astro` props：`{ locale: Locale }`（只用於首頁）
+  - `SiteBackdrop.astro`：無 props（用於 About 與索引頁）
   - 全域旗標 `window.__dither: DitherHandle | undefined`（Task 11 的換頁故障需要）
-  - `<html>` 上的 `gl-active` class（WebGL 成功啟動時）
+  - `<html>` 上的 class：`seq-pending`（序列即將播放，由 head inline script 設定）、`gl-active`（WebGL 已啟動）、`seq-done`（序列已結束或不播放）
 
 - [ ] **Step 1: 建立 HeroSequence 元件**
 
@@ -3081,6 +3083,7 @@ const { locale } = Astro.props;
 
     // 無 WebGL：不下載 three.js，DOM 字標留在畫面上，網站照常運作
     if (!supportsWebGL(document.createElement('canvas'))) {
+      document.documentElement.classList.remove('seq-pending');
       bootLog?.remove();
       skipHint?.remove();
       return;
@@ -3103,6 +3106,7 @@ const { locale } = Astro.props;
 
     if (skipSequence) {
       handle.setFrame(IDLE_FRAME);
+      document.documentElement.classList.remove('seq-pending');
       document.documentElement.classList.add('seq-done');
       bootLog?.remove();
       skipHint?.remove();
@@ -3135,6 +3139,11 @@ const { locale } = Astro.props;
       document.documentElement.style.setProperty('--seq-chrome', String(frame.chrome));
       document.documentElement.style.setProperty('--seq-flash', String(frame.flash));
 
+      // SETTLE 一開始就把 #fx 沉回背景：內容硬切露出
+      if (frame.chrome > 0) {
+        document.documentElement.classList.remove('seq-pending');
+      }
+
       if (frame.phase === 'idle') {
         finished = true;
         sessionStorage.setItem(SESSION_KEY, '1');
@@ -3154,7 +3163,31 @@ const { locale } = Astro.props;
 </script>
 ```
 
-- [ ] **Step 2: 補上型別宣告**
+- [ ] **Step 2: 在 BaseLayout 加入決定是否播放的同步 inline script**
+
+這段必須是 `is:inline` 且位於 `<head>`，在首次繪製之前執行——否則會出現「內容出現 → 被蓋住 → 再出現」的閃爍。
+
+修改 `src/layouts/BaseLayout.astro`，在 `<slot name="head" />` 之前加入：
+
+```astro
+{front && (
+  <script is:inline>
+    (function () {
+      try {
+        var played = sessionStorage.getItem('hh.sequence.played') === '1';
+        var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!played && !reduced) {
+          document.documentElement.classList.add('seq-pending');
+        }
+      } catch (e) {
+        /* sessionStorage 可能被封鎖；封鎖時不播序列即可 */
+      }
+    })();
+  </script>
+)}
+```
+
+- [ ] **Step 3: 補上型別宣告**
 
 建立 `src/env.d.ts`（若已存在則附加）：
 
@@ -3171,7 +3204,7 @@ declare global {
 export {};
 ```
 
-- [ ] **Step 3: 附加序列相關樣式**
+- [ ] **Step 4: 附加序列相關樣式**
 
 附加到 `src/styles/base.css` 末尾：
 
@@ -3201,17 +3234,26 @@ export {};
   pointer-events: none;
 }
 
-/* 序列進行中，導覽與內容依 --seq-chrome 淡入。
-   預設值 1 讓沒有 JS 時內容立刻可見。 */
-html[data-front='true'] { --seq-chrome: 1; --seq-flash: 0; }
-html[data-front='true'].gl-active:not(.seq-done) .site-nav,
-html[data-front='true'].gl-active:not(.seq-done) .page {
-  opacity: var(--seq-chrome);
+/* 序列進行中「不藏內容，用不透明的 canvas 蓋住它」。
+   內容照常繪製，所以 LCP 正常計時；視覺上被 #fx 蓋著。
+   序列結束時 #fx 沉回背景，內容硬切露出——比淡入更貼合這個美學。 */
+html { --seq-chrome: 1; --seq-flash: 0; }
+
+/* seq-pending 由 <head> 的同步 inline script 決定，先於首次繪製，所以不會閃 */
+html.seq-pending #fx {
+  z-index: 8;
+  /* three.js 還沒載入完時先用底色擋著，避免透出下方內容 */
+  background: var(--ground);
 }
-html[data-front='true'].gl-active:not(.seq-done) .wordmark { opacity: 0; }
+
+/* 導覽列（不是 LCP 元素）仍然依 --seq-chrome 淡入 */
+html.seq-pending .site-nav { opacity: var(--seq-chrome); }
+
+/* WebGL 會自己畫字標，DOM 字標降為透明但保留在無障礙樹中 */
+html.gl-active .wordmark { opacity: 0; }
 
 /* 全螢幕白閃 */
-html[data-front='true'].gl-active:not(.seq-done)::after {
+html.seq-pending::after {
   content: '';
   position: fixed;
   inset: 0;
@@ -3227,7 +3269,7 @@ html[data-front='true'].gl-active:not(.seq-done)::after {
 }
 ```
 
-- [ ] **Step 4: 只在兩個首頁掛上序列**
+- [ ] **Step 5: 只在兩個首頁掛上序列**
 
 修改 `src/pages/index.astro`：在 `import Wordmark` 之後加入
 
@@ -3255,7 +3297,73 @@ import HeroSequence from '../../components/HeroSequence.astro';
 
 **不要**在 `about.astro`、`writing/index.astro`、`[slug].astro` 加入這個元件——字標與序列只屬於首頁。
 
-- [ ] **Step 5: 建置並驗證 bundle 邊界**
+- [ ] **Step 6: 建立降強度背景元件並掛到 About 與索引頁**
+
+設計文件 §3.2 規定 `/about` 與 `/writing` 索引有「降低強度」的背景動畫：沒有序列、沒有字標，只有安靜的抖色底。
+
+`src/components/SiteBackdrop.astro`：
+
+```astro
+---
+// 門面路由（非首頁）的安靜背景。沒有序列、沒有字標。
+---
+<script>
+  import { IDLE_FRAME } from '../lib/sequence/timeline';
+  import type { DitherHandle } from '../lib/dither';
+
+  async function boot(): Promise<void> {
+    const canvas = document.getElementById('dither-canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    try {
+      const probe = document.createElement('canvas');
+      if (!(probe.getContext('webgl2') ?? probe.getContext('webgl'))) return;
+    } catch {
+      return;
+    }
+
+    const { createDither } = await import('../lib/dither');
+    const styles = getComputedStyle(document.documentElement);
+    const handle: DitherHandle = createDither(canvas, {
+      ground: styles.getPropertyValue('--ground').trim(),
+      ink: styles.getPropertyValue('--ink').trim(),
+      accent: styles.getPropertyValue('--accent').trim(),
+    });
+    window.__dither = handle;
+    document.documentElement.classList.add('gl-active', 'seq-done');
+
+    // 降強度：顆粒與脈衝環減半，場景更淡，字標為 0（字標只屬於首頁）
+    handle.setFrame({
+      ...IDLE_FRAME,
+      grain: 0.01,
+      ring: 0.13,
+      scene: 0.5,
+      wordmark: 0,
+    });
+  }
+
+  void boot();
+</script>
+```
+
+掛到四個頁面——`src/pages/about.astro`、`src/pages/writing/index.astro`、`src/pages/zh/about.astro`、`src/pages/zh/writing/index.astro`。以 `about.astro` 為例，在 frontmatter 加入
+
+```astro
+import SiteBackdrop from '../components/SiteBackdrop.astro';
+```
+
+並在 `<main>` 之前加入
+
+```astro
+<SiteBackdrop />
+```
+
+（`zh/` 底下的頁面 import 路徑多一層 `../`；`writing/index.astro` 同理。）
+
+**不要**掛到 `writing/[slug].astro` 或 `zh/writing/[slug].astro`——那是唯一不載入 WebGL 的路徑。
+
+- [ ] **Step 7: 建置並驗證 bundle 邊界**
 
 Run: `npm run build`
 Expected: 成功。
@@ -3266,7 +3374,7 @@ Expected: 無輸出（文章頁的 HTML 不引用 three.js）。
 Run: `grep -o 'src="[^"]*\.js"' dist/writing/approval-orchestrator/index.html`
 Expected: 無輸出，或只有與 dither 無關的腳本。
 
-- [ ] **Step 6: 人工驗證三種模式**
+- [ ] **Step 8: 人工驗證三種模式**
 
 Run: `npm run preview`
 
@@ -3285,11 +3393,11 @@ Run: `npm run preview`
 5. 在瀏覽器 DevTools 停用 JavaScript 後重新整理
    Expected: 深紫黑底、DOM 字標 `KEHAO / HAPPY HACKING` 可見、導覽與終端機視窗內容全部可讀。
 
-- [ ] **Step 7: 提交**
+- [ ] **Step 9: 提交**
 
 ```bash
-git add src/components/HeroSequence.astro src/env.d.ts src/pages/index.astro src/pages/zh/index.astro src/styles/base.css
-git commit -m "feat: 首頁入侵序列與無 WebGL / 無 JS 退化路徑"
+git add src/components/ src/env.d.ts src/layouts/BaseLayout.astro src/pages/ src/styles/base.css
+git commit -m "feat: 入侵序列、降強度背景與退化路徑"
 ```
 
 ---
@@ -3726,7 +3834,241 @@ git commit -m "test: 效能預算、退化路徑與導覽的端對端護欄"
 
 ---
 
-## Task 13: 部署設定
+## Task 13: Lighthouse 分數基準
+
+**Files:**
+- Create: `lighthouserc.js`
+- Create: `docs/lighthouse-baseline.md`
+- Modify: `package.json`
+
+**Interfaces:**
+- Consumes: Task 1–12 的完整網站
+- Produces: `npm run test:lighthouse` 指令；`docs/lighthouse-baseline.md` 記錄實測分數
+
+目標是**綠色（≥ 0.90），不是滿分**。追 100 會逼你砍掉真正想要的東西；90 是「這個網站沒有明顯毛病」的證明，那才是這條測試要守的東西。
+
+Lighthouse 預設用**行動裝置模擬 + 網路節流**，是最嚴苛的設定。這裡不放寬，因為技術文章的讀者很多是在手機上點開的。
+
+- [ ] **Step 1: 安裝 Lighthouse CI**
+
+```bash
+npm install -D @lhci/cli
+```
+
+在 `package.json` 的 `scripts` 加入：
+
+```json
+"test:lighthouse": "lhci autorun"
+```
+
+Lighthouse 需要 Chrome。若系統沒有安裝，用 Playwright 已下載的 chromium：
+
+```bash
+export CHROME_PATH="$(node -e "console.log(require('@playwright/test').chromium.executablePath())")"
+```
+
+- [ ] **Step 2: 建立設定與斷言**
+
+`lighthouserc.js`：
+
+```js
+/**
+ * 目標是綠色（>= 0.90），不是滿分。
+ * numberOfRuns: 3 —— Lighthouse 分數有雜訊，LHCI 取中位數。
+ * 只跑一次會產生隨機失敗的測試，那比沒有測試更糟。
+ */
+const GREEN = 0.9;
+
+/** 四個類別一律要綠 */
+const categories = {
+  'categories:performance': ['error', { minScore: GREEN }],
+  'categories:accessibility': ['error', { minScore: GREEN }],
+  'categories:best-practices': ['error', { minScore: GREEN }],
+  'categories:seo': ['error', { minScore: GREEN }],
+};
+
+/**
+ * 類別分數是加權合成的，可能藏住單一項爛掉的指標。
+ * 這裡直接對 Core Web Vitals 的「良好」門檻設限。
+ */
+const vitals = {
+  'largest-contentful-paint': ['error', { maxNumericValue: 2500 }],
+  'cumulative-layout-shift': ['error', { maxNumericValue: 0.1 }],
+  'total-blocking-time': ['error', { maxNumericValue: 300 }],
+  'first-contentful-paint': ['error', { maxNumericValue: 1800 }],
+};
+
+/** 與本專案的設計紀律直接對應的個別稽核 */
+const discipline = {
+  // 配色紀律的第二道防線（第一道是 tokens.test.ts）
+  'color-contrast': ['error', { minScore: 1 }],
+  'html-has-lang': ['error', { minScore: 1 }],
+  'document-title': ['error', { minScore: 1 }],
+  'meta-description': ['error', { minScore: 1 }],
+  'hreflang': ['error', { minScore: 1 }],
+  'heading-order': ['error', { minScore: 1 }],
+  // three.js 必然會被判定為「未使用的 JavaScript」——它是刻意的設計選擇，不是疏失
+  'unused-javascript': 'off',
+  'legacy-javascript': 'off',
+  // v1 沒有圖片，這些稽核沒有意義
+  'uses-responsive-images': 'off',
+  'modern-image-formats': 'off',
+  // 靜態站的 CSP 由 Cloudflare Pages 的 _headers 處理，不在建置產物內
+  'csp-xss': 'off',
+};
+
+export default {
+  ci: {
+    collect: {
+      startServerCommand: 'npm run preview',
+      startServerReadyPattern: 'localhost',
+      startServerReadyTimeout: 60000,
+      numberOfRuns: 3,
+      url: [
+        'http://localhost:4321/',
+        'http://localhost:4321/about/',
+        'http://localhost:4321/writing/',
+        'http://localhost:4321/writing/approval-orchestrator/',
+        'http://localhost:4321/zh/',
+        'http://localhost:4321/zh/writing/aks-lun-exhaustion/',
+      ],
+      settings: {
+        // 預設即為行動裝置模擬，明寫出來避免日後被誤改
+        preset: 'desktop' === process.env.LHCI_PRESET ? 'desktop' : undefined,
+        skipAudits: ['uses-http2'], // 本機 preview 沒有 HTTP/2，正式環境由 Cloudflare 提供
+      },
+    },
+    assert: {
+      assertMatrix: [
+        {
+          // 文章內頁：零 JavaScript，標準最嚴
+          matchingUrlPattern: '.*/writing/[^/]+/$',
+          assertions: { ...categories, ...vitals, ...discipline },
+        },
+        {
+          // 其餘所有路由（首頁、About、索引）：載入 WebGL
+          matchingUrlPattern: '.*',
+          assertions: { ...categories, ...vitals, ...discipline },
+        },
+      ],
+    },
+    upload: {
+      target: 'filesystem',
+      outputDir: './.lighthouseci',
+    },
+  },
+};
+```
+
+在 `.gitignore` 加入一行：
+
+```
+.lighthouseci/
+```
+
+- [ ] **Step 3: 執行並取得實測基準**
+
+```bash
+npm run build
+npm run test:lighthouse
+```
+
+Expected: 六個 URL 的四個類別中位數皆 ≥ 0.90。
+
+文章內頁（`/writing/approval-orchestrator/`、`/zh/writing/aks-lun-exhaustion/`）幾乎不可能不過——它們沒有任何 JavaScript。
+
+**真正有風險的是 `/` 與 `/zh/`**，因為它們載入 three.js 並播放序列。若這兩個 URL 未達標，依序採取下列補救，每做一步就重跑一次：
+
+**補救 A —— 把 three.js 的載入推遲到 LCP 之後。**
+修改 `src/components/HeroSequence.astro`，把 `void boot();` 換成：
+
+```js
+  // 讓瀏覽器先完成首次內容繪製，再去下載 three.js
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => void boot(), { timeout: 600 });
+  } else {
+    setTimeout(() => void boot(), 120);
+  }
+```
+
+`SiteBackdrop.astro` 做相同修改。
+
+**補救 B —— 確認 `seq-pending` 沒有把 LCP 元素藏起來。**
+執行 `npx lighthouse http://localhost:4321/ --view`，在報告的 "Largest Contentful Paint element" 區塊確認 LCP 元素是終端機視窗或字標，而不是空的。若 Lighthouse 回報 LCP 元素為 `#fx`，代表內容被判定為未繪製——回頭檢查 Task 10 Step 4 的 CSS 是否誤把 `.page` 設成 `opacity: 0`。
+
+**補救 C —— 若 A 與 B 都做完仍未達 0.90**，把 `lighthouserc.js` 的第二個 matrix 區塊改成只針對首頁放寬，並在 `docs/lighthouse-baseline.md` 記下實測數字與原因：
+
+```js
+        {
+          matchingUrlPattern: '.*localhost:4321/(zh/)?$',
+          assertions: {
+            ...categories,
+            ...vitals,
+            ...discipline,
+            // 首頁刻意載入 three.js 播放入侵序列，這是設計決策而非疏失。
+            // 實測中位數記錄於 docs/lighthouse-baseline.md。
+            'categories:performance': ['warn', { minScore: GREEN }],
+          },
+        },
+```
+
+**只有在 A 與 B 都實際執行過之後才准用 C。** 先放寬門檻再去修，門檻就永遠不會被修回來。
+
+- [ ] **Step 4: 記錄基準**
+
+`docs/lighthouse-baseline.md`：
+
+```markdown
+# Lighthouse 基準
+
+目標：四個類別皆綠（≥ 0.90）。不追滿分。
+
+設定：Lighthouse 預設的行動裝置模擬 + 網路節流，三次取中位數。
+執行：`npm run test:lighthouse`
+
+## 實測（YYYY-MM-DD，填入實際執行日期與數字）
+
+| 路由 | Perf | A11y | BP | SEO | LCP | CLS | TBT |
+|---|---|---|---|---|---|---|---|
+| `/` | | | | | | | |
+| `/about/` | | | | | | | |
+| `/writing/` | | | | | | | |
+| `/writing/approval-orchestrator/` | | | | | | | |
+| `/zh/` | | | | | | | |
+| `/zh/writing/aks-lun-exhaustion/` | | | | | | | |
+
+## 刻意關閉的稽核
+
+| 稽核 | 原因 |
+|---|---|
+| `unused-javascript` | three.js 在首次繪製時尚未使用是刻意的載入策略 |
+| `legacy-javascript` | 同上 |
+| `uses-responsive-images` / `modern-image-formats` | v1 沒有圖片 |
+| `csp-xss` | CSP 由 Cloudflare Pages 的 `public/_headers` 提供，不在建置產物內 |
+| `uses-http2` | 本機 preview 無 HTTP/2，正式環境由 Cloudflare 提供 |
+
+關閉一項稽核就要在這裡寫下原因。沒有原因的關閉，下次就會變成沒有人記得的技術債。
+```
+
+把 Step 3 的實測數字填進表格。
+
+- [ ] **Step 5: 執行完整測試套件**
+
+Run: `npm test && npm run check && npm run build && npm run test:e2e && npm run test:lighthouse`
+Expected: 五者皆通過。
+
+註：`test:lighthouse` 約需 2–4 分鐘，**刻意不放進 `npm test`**。單元測試要能在兩秒內給出回饋，把它和 Lighthouse 綁在一起會讓你不想跑測試。
+
+- [ ] **Step 6: 提交**
+
+```bash
+git add package.json package-lock.json lighthouserc.js .gitignore docs/lighthouse-baseline.md
+git commit -m "test: Lighthouse 綠色分數基準與 Core Web Vitals 門檻"
+```
+
+---
+
+## Task 14: 部署設定
 
 **Files:**
 - Create: `public/_headers`
@@ -3881,12 +4223,14 @@ git commit -m "chore: 部署設定、README 與設計文件版本修正"
 | 4 內容來源與 schema | Task 3 |
 | 5 路由與 i18n | Task 4、Task 6、Task 7 |
 | 6 錯誤處理與退化 | Task 10（退化路徑）、Task 12（驗證） |
-| 7 測試 | Task 1/2/3/4/8/9（Vitest）、Task 12（Playwright） |
+| 7 測試 | Task 1/2/3/4/8/9（Vitest）、Task 12（Playwright）、Task 13（Lighthouse） |
 
 發現並已修正的問題：
 
-1. **設計文件說 Astro 5，實際現行版本為 6** — 計畫改用 Astro 6，並在 Task 13 Step 4 一併修正設計文件。
+1. **設計文件說 Astro 5，實際現行版本為 6** — 計畫改用 Astro 6，並在 Task 14 Step 4 一併修正設計文件。
 2. **標籤篩選原本規劃用查詢參數 `?tag=`** — 靜態輸出無法為查詢參數預先產生頁面，改為 `/writing/tag/<tag>` 靜態路由；設計文件第 5 節該處描述已由此計畫取代。
 3. **`--dim` 的使用範圍容易被誤用** — 已寫進 Global Constraints，且 `TerminalWindow.astro` 用 `meta`（`--muted`）與 `deco`（`--dim`）兩個不同 prop 從介面層強制區分。
 4. **`readingTime` 在 schema 中為選填** — Task 3 的 `loadPosts()` 以 Task 2 的 `estimateReadingTime` 補齊，型別上對下游永遠是 `number`。
-5. **`window.__dither` 的型別** — Task 10 Step 2 補上 `src/env.d.ts` 的全域宣告，避免 Task 11 使用時型別錯誤。
+5. **`window.__dither` 的型別** — Task 10 補上 `src/env.d.ts` 的全域宣告，避免 Task 11 使用時型別錯誤。
+6. **序列原本會造成「內容閃現後被藏起」** — 原設計以 `opacity: 0` 隱藏 `.page`，但該 class 要等 three.js 載入完才加上，中間會閃；且 Lighthouse 不把 `opacity: 0` 的元素計入 LCP。改為由 `<head>` 的同步 inline script 設定 `seq-pending`，用不透明的 `#fx` 覆蓋內容——內容始終被繪製（LCP 正常），視覺上被蓋住，SETTLE 時硬切露出。
+7. **設計文件 §3.2 要求 `/about` 與 `/writing` 有降強度背景，原計畫漏做** — Task 10 補上 `SiteBackdrop.astro`，並明確排除文章內頁。
