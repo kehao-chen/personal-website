@@ -11,19 +11,60 @@
 
 const OPEN_ATTR = 'data-open';
 
+/**
+ * `nav-glitch.ts` 換頁故障轉場時，會把整棵 `main.page` clone 兩份塞進
+ * `#fx-layers`（`#fx` 在 DOM 順序上排在 `main.page` 之前）。clone 沒有清掉
+ * 子孫的 id/class，所以在轉場的 420ms 內，文件裡會同時存在真正的 `.desktop`
+ * 與兩份 clone，`[data-profile-toggle]` 同理。任何無範圍的查詢都可能抓到
+ * clone 而不是真正的那一個——這個判斷式把 clone 篩掉，兩處查詢共用同一套
+ * 規則，不各寫一次。
+ */
+function isReal(el: Element): boolean {
+  return !el.closest('#fx');
+}
+
 function desktop(): HTMLElement | null {
-  return document.querySelector<HTMLElement>('.desktop');
+  return [...document.querySelectorAll<HTMLElement>('.desktop')].find(isReal) ?? null;
+}
+
+function realToggles(): HTMLElement[] {
+  return [...document.querySelectorAll<HTMLElement>('[data-profile-toggle]')].filter(isReal);
+}
+
+/**
+ * 序列進行中視窗被 `html.seq-pending .vim { visibility: hidden }` 視覺收起，
+ * 但 `data-open` 沒被動過（收起是序列造成的，不是關閉）。aria-expanded 該
+ * 反映使用者實際感知到的狀態，所以序列期間一律回報 false。
+ */
+function ariaOpen(): boolean {
+  return isOpen() && !document.documentElement.classList.contains('seq-pending');
+}
+
+function reflectAria(): void {
+  const open = String(ariaOpen());
+  for (const toggle of realToggles()) {
+    toggle.setAttribute('aria-expanded', open);
+  }
 }
 
 function setOpen(open: boolean): void {
   const root = desktop();
   if (!root) return;
 
+  // 用 [x] 或 ESC 關閉時，焦點通常還停在視窗內部（例如 [x] 本身）；視窗收起
+  // 後那個節點不再可聚焦，焦點會掉到 <body>。收合型控制項關閉時該把焦點交還
+  // 給觸發它的圖示——這正是那個入口，重新打開視窗也是點它。
+  const shouldRestoreFocus = !open && root.contains(document.activeElement);
+
   if (open) root.setAttribute(OPEN_ATTR, '');
   else root.removeAttribute(OPEN_ATTR);
 
-  for (const toggle of document.querySelectorAll<HTMLElement>('[data-profile-toggle]')) {
-    toggle.setAttribute('aria-expanded', String(open));
+  reflectAria();
+
+  if (shouldRestoreFocus) {
+    const toggle = root.querySelector<HTMLElement>('[data-profile-toggle]');
+    // 窄畫面圖示 display:none，offsetParent 為 null；隱藏元素不能 focus()
+    if (toggle && toggle.offsetParent !== null) toggle.focus();
   }
 }
 
@@ -32,6 +73,11 @@ function isOpen(): boolean {
 }
 
 function onClick(event: MouseEvent): void {
+  // 序列進行中，所有點擊屬於「跳過序列」，不搶（與 onKeydown 同一條規則）。
+  // #fx 的 canvas 蓋住畫面但 pointer-events:none，滑鼠打得到底下（此時看不見的）
+  // .desktop-icon；沒有這個守衛，使用者為了跳過序列點下去，會同時把視窗關掉。
+  if (document.documentElement.classList.contains('seq-pending')) return;
+
   const target = event.target as HTMLElement | null;
   if (!target) return;
 
@@ -92,5 +138,21 @@ export function initProfileWindow(): void {
   document.addEventListener('keydown', onKeydown);
 
   // pendingColon 屬於「當前這一頁的這個視窗」，不該跨換頁存活。
-  document.addEventListener('astro:page-load', () => { pendingColon = false; });
+  // 順便讓 aria-expanded 跟上新頁面剛換好的 DOM（通常已經正確，這裡只是保險）。
+  document.addEventListener('astro:page-load', () => {
+    pendingColon = false;
+    reflectAria();
+  });
+
+  // seq-pending 的加／解由 site-dither.ts 依序列時間軸決定，這裡不重新做一份
+  // 時序，只是被動鏡射那個已經存在的 class 到 aria-expanded 上。<html> 本身
+  // 跨換頁不會被替換，這個 observer 只需要掛一次。
+  new MutationObserver(reflectAria).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class'],
+  });
+
+  // 首次載入時 seq-pending 可能已經在 <head> 的 inline script 裡被加上了，
+  // 上面的 observer 只會抓到「之後」的變化，這裡補一次初始狀態。
+  reflectAria();
 }

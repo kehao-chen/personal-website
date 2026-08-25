@@ -106,6 +106,15 @@ test('點 [x] 關閉視窗，點圖示重新開啟', async ({ page }) => {
   await expect(icon).toHaveAttribute('aria-expanded', 'true');
 });
 
+test('點 [x] 關閉視窗後，焦點移回桌面圖示（disclosure 收合後焦點該還給觸發它的控制項）', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveClass(/seq-done/, { timeout: 10_000 });
+
+  await page.locator('.vim-close').click();
+  await expect(page.locator('#profile-window')).toBeHidden();
+  await expect(page.locator('.desktop-icon')).toBeFocused();
+});
+
 test('停用 JavaScript 時視窗是開的，內容完整可見', async ({ browser }) => {
   const ctx = await browser.newContext({ javaScriptEnabled: false });
   const page = await ctx.newPage();
@@ -128,6 +137,18 @@ test('序列播放期間視窗收起，chrome 長出來後才露出', async ({ p
 
   // wrapper 的 data-open 從頭到尾沒被動過——收起是 seq-pending 造成的，不是關閉狀態
   await expect(page.locator('.desktop')).toHaveAttribute('data-open', '');
+});
+
+test('序列進行中，桌面圖示的 aria-expanded 反映使用者實際看到的（收起的）狀態', async ({ page }) => {
+  await page.goto('/');
+
+  // data-open 沒被動過，但視窗此刻對使用者來說是隱藏的——aria 該說 false
+  await expect(page.locator('html')).toHaveClass(/seq-pending/);
+  await expect(page.locator('.desktop-icon')).toHaveAttribute('aria-expanded', 'false');
+
+  // 序列結束、視窗真的露出後，aria 跟著回報 true
+  await expect(page.locator('html')).not.toHaveClass(/seq-pending/, { timeout: 10_000 });
+  await expect(page.locator('.desktop-icon')).toHaveAttribute('aria-expanded', 'true');
 });
 
 test('同一 session 第二次進首頁不播序列，視窗立刻是開的', async ({ page }) => {
@@ -215,4 +236,48 @@ test('pendingColon 在換頁後重置，:q 不會誤關新頁面的視窗', asyn
   // 正確的行為是視窗仍然開著，因為 pendingColon 已經在 astro:page-load 時重置
   await page.keyboard.press('q');
   await expect(page.locator('#profile-window')).toBeVisible();
+});
+
+test('序列進行中點到看不見的桌面圖示，序列結束後視窗仍是開的', async ({ page }) => {
+  await page.goto('/');
+  // 序列剛開始：#fx 蓋住畫面但 pointer-events:none，.desktop-icon 視覺上看不見
+  // 卻打得到。site-dither 把「點擊或按任意鍵」都當成「跳過序列」，onClick 必須
+  // 有跟 onKeydown 一樣的守衛，不然這一下會同時跳過序列又把視窗關掉。
+  await expect(page.locator('html')).toHaveClass(/seq-pending/);
+  await page.locator('.desktop-icon').dispatchEvent('click');
+
+  await expect(page.locator('html')).toHaveClass(/seq-done/, { timeout: 10_000 });
+  await expect(page.locator('.desktop')).toHaveAttribute('data-open', '');
+  await expect(page.locator('#profile-window')).toBeVisible();
+});
+
+test('文件裡混進 nav-glitch 式的 clone 時，ESC 只會影響真正的視窗', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveClass(/seq-done/, { timeout: 10_000 });
+
+  // nav-glitch 換頁故障轉場時，會把 main.page 整棵 clone 塞進排在它前面的
+  // #fx-layers，而且不清子孫的 id/class——所以轉場的幾百毫秒內文件裡真的會有
+  // 兩份 `.desktop`。真正轉場只有幾百毫秒寬，用它來當守門測試在 CI 的平行負載
+  // 下容易因為系統排程延遲而錯過那個窗口而各偽陽性；這裡直接照那個機制在
+  // #fx-layers 底下放一份複製品，決定性地重現同一種文件狀態，不賭時間。
+  await page.evaluate(() => {
+    const real = document.querySelector('.desktop');
+    const fxLayers = document.getElementById('fx-layers');
+    if (real && fxLayers) fxLayers.appendChild(real.cloneNode(true));
+  });
+  await expect(page.locator('.desktop')).toHaveCount(2);
+
+  await page.keyboard.press('Escape');
+
+  // 真正的視窗被正確關閉，而不是誤中 clone、什麼都沒發生。真正那一個是
+  // <body> 的直接子元素，clone 埋在 #fx > #fx-layers 底下多一層——clone 本身
+  // 也是 main.page 整棵複製過去的，所以「main.page .desktop」這個選擇器
+  // 抓不出真假，要用 `body > main.page` 才能唯一鎖定真正的那一個。
+  const realDesktop = page.locator('body > main.page .desktop');
+  await expect(realDesktop).not.toHaveAttribute('data-open', /.*/);
+  await expect(page.locator('body > main.page #profile-window')).toBeHidden();
+  await expect(page.locator('body > main.page .desktop-icon')).toHaveAttribute('aria-expanded', 'false');
+
+  // clone 完全沒被動到——它停在「複製當下」的樣子（複製當下視窗還開著）
+  await expect(page.locator('#fx-layers .desktop')).toHaveAttribute('data-open', '');
 });
