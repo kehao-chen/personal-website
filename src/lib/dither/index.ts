@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Frame } from '../sequence/timeline';
 import { FRAGMENT_SHADER, VERTEX_SHADER, UNIFORM_NAMES } from './shader';
 import { createScene, type DitherScene } from './scene';
+import { FRAMING } from './framing';
 
 export { FRAGMENT_SHADER, VERTEX_SHADER, UNIFORM_NAMES };
 
@@ -134,9 +135,13 @@ export function createDither(
       const height = canvas.clientHeight;
       if (!width || !height) return;
       if (canvas.width !== Math.floor(width * dpr)) {
+        const aspect = width / height;
         activeRenderer.setSize(width, height, false);
-        activeWorld.camera.aspect = width / height;
+        activeWorld.camera.aspect = aspect;
         activeWorld.camera.updateProjectionMatrix();
+        // 字標與球體是固定的世界座標尺寸，可視範圍卻隨長寬比縮放。直式畫面
+        // 若不重新取景，看到的是被裁掉一半的字標與球。
+        activeWorld.fit(aspect);
       }
       activeTarget.setSize(Math.floor(width * dpr), Math.floor(height * dpr));
       uniforms.uRes.value.set(width * dpr, height * dpr);
@@ -177,7 +182,7 @@ export function createDither(
       activeWorld.shell.rotation.y = seconds * 0.14;
       activeWorld.camera.position.x = Math.sin(seconds * 0.22) * 0.9;
       activeWorld.camera.position.y = 1.6 + Math.sin(seconds * 0.3) * 0.2;
-      activeWorld.camera.lookAt(0, 1.3, 0);
+      activeWorld.camera.lookAt(0, FRAMING.baseY, 0);
 
       activeRenderer.setRenderTarget(activeTarget);
       activeRenderer.render(activeWorld.scene, activeWorld.camera);
