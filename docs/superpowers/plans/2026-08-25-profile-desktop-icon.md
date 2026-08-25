@@ -112,6 +112,29 @@ test('首頁不再有舊的終端機視窗', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('.layout-front .win')).toHaveCount(0);
 });
+
+test('[x] 的點擊區達到 WCAG 2.5.8 的 24px', async ({ page }) => {
+  await page.goto('/');
+  // 視覺盒刻意維持小尺寸（標題列高度由字級決定），熱區靠覆蓋式 ::after 撐開，
+  // 所以量 boundingBox 量不到——要從中心往上下打點，看命中的是不是同一個按鈕。
+  const height = await page.evaluate(() => {
+    const btn = document.querySelector<HTMLElement>('.vim-close');
+    if (!btn) return 0;
+    const box = btn.getBoundingClientRect();
+    const cx = box.left + box.width / 2;
+    const cy = box.top + box.height / 2;
+    const hits = (dy: number) => {
+      const el = document.elementFromPoint(cx, cy + dy);
+      return el === btn || btn.contains(el);
+    };
+    let up = 0;
+    let down = 0;
+    while (up < 40 && hits(-(up + 1))) up++;
+    while (down < 40 && hits(down + 1)) down++;
+    return up + down + 1;
+  });
+  expect(height).toBeGreaterThanOrEqual(24);
+});
 ```
 
 - [ ] **Step 2: 跑測試，確認它失敗**
@@ -123,6 +146,10 @@ npx playwright test tests/e2e/profile-window.spec.ts
 預期：四個都 FAIL，`.vim` 找不到。
 
 - [ ] **Step 3: 建立 VimWindow 元件**
+
+**注意**：這個 task 只畫出 `[x]`，不接行為——開關互動整組在 Task 2。`data-profile-close`
+這個 hook 屬性是留給 Task 2 的委派 listener 用的，本 task 不加任何 JavaScript。
+按鈕在此刻沒有作用是預期中的中間狀態，不是遺漏。
 
 `src/components/VimWindow.astro`：
 
@@ -206,6 +233,7 @@ zh 區塊加：
 .vim-path { color: var(--muted); }
 
 .vim-close {
+  position: relative;
   margin-left: auto;
   padding: 0;
   border: none;
@@ -215,7 +243,19 @@ zh 區塊加：
   color: var(--muted);
   cursor: pointer;
 }
-.vim-close:hover { color: var(--accent); }
+.vim-close:hover, .vim-close:focus-visible { color: var(--accent); }
+
+/* 熱區補到 24px（WCAG 2.5.8）。與導覽列同一個手法：用覆蓋式 ::after 放大可點
+   範圍，不加 min-height——標題列的高度是由字級決定的，撐開會破壞 chrome 比例。 */
+.vim-close::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 24px);
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
 
 /* 行號欄寬度：兩位數 + 間距。行號用 ::before 絕對定位，所以換行的續行不會
    再拿到一個號碼——這正是 vim 開了 `set number` 之後的行為。 */
