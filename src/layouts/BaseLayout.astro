@@ -3,7 +3,7 @@ import '../styles/base.css';
 import { ClientRouter } from 'astro:transitions';
 import type { Locale } from '../lib/posts';
 import SiteNav from '../components/SiteNav.astro';
-import { alternateHreflang } from '../lib/i18n/routing';
+import { alternateHreflang, bcp47 } from '../lib/i18n/routing';
 
 interface Props {
   locale: Locale;
@@ -28,7 +28,7 @@ interface Props {
 
 const { locale, title, description, path, current, sequence = false, availableLocales } = Astro.props;
 const alternates = alternateHreflang(path, availableLocales);
-const htmlLang = locale === 'zh' ? 'zh-Hant' : 'en';
+const htmlLang = bcp47(locale);
 ---
 
 <html lang={htmlLang}>
@@ -69,7 +69,7 @@ const htmlLang = locale === 'zh' ? 'zh-Hant' : 'en';
       <div id="fx-layers"></div>
     </div>
 
-    <SiteNav locale={locale} current={current} />
+    <SiteNav locale={locale} current={current} path={path} availableLocales={availableLocales} />
     <slot />
 
     <script>

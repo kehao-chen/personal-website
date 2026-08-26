@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  DEFAULT_LOCALE, localizePath, localeFromPath, stripLocale, alternateHreflang,
-} from './routing';
+import { DEFAULT_LOCALE, alternateHreflang, localeFromPath, localeSwitchTarget, localizePath, stripLocale } from './routing';
 
 describe('localizePath', () => {
   it('預設語言不加前綴', () => {
@@ -104,5 +102,52 @@ describe('alternateHreflang', () => {
 describe('DEFAULT_LOCALE', () => {
   it('是 en', () => {
     expect(DEFAULT_LOCALE).toBe('en');
+  });
+});
+
+describe('localeSwitchTarget', () => {
+  it('同一頁的另一個語言版本——換語系不該跳回首頁', () => {
+    expect(localeSwitchTarget('zh', '/about')).toBe('/zh/about/');
+    expect(localeSwitchTarget('en', '/zh/about/')).toBe('/about/');
+    expect(localeSwitchTarget('zh', '/writing')).toBe('/zh/writing/');
+    expect(localeSwitchTarget('en', '/zh/writing/')).toBe('/writing/');
+  });
+
+  it('首頁還是首頁', () => {
+    expect(localeSwitchTarget('zh', '/')).toBe('/zh/');
+    expect(localeSwitchTarget('en', '/zh/')).toBe('/');
+  });
+
+  it('兩種語言都有的文章，直接對到手足 URL', () => {
+    expect(localeSwitchTarget('zh', '/writing/some-post', ['en', 'zh']))
+      .toBe('/zh/writing/some-post/');
+  });
+
+  it('沒有中文版的英文文章，退到中文的 /writing/ 而不是首頁', () => {
+    expect(localeSwitchTarget('zh', '/writing/approval-orchestrator', ['en']))
+      .toBe('/zh/writing/');
+  });
+
+  it('沒有英文版的中文文章，退到英文的 /writing/', () => {
+    expect(localeSwitchTarget('en', '/zh/writing/aks-lun-exhaustion', ['zh']))
+      .toBe('/writing/');
+  });
+
+  it('標籤頁比照文章頁', () => {
+    expect(localeSwitchTarget('zh', '/writing/tag/architecture', ['en']))
+      .toBe('/zh/writing/');
+    expect(localeSwitchTarget('zh', '/writing/tag/aks', ['en', 'zh']))
+      .toBe('/zh/writing/tag/aks/');
+  });
+
+  it('不在任何雙語區段底下的單語頁（404）退回首頁', () => {
+    expect(localeSwitchTarget('zh', '/404', ['en'])).toBe('/zh/');
+  });
+
+  it('回傳的路徑一律是目錄形式，不會多吃一次轉址', () => {
+    for (const path of ['/about', '/writing', '/writing/x', '/404']) {
+      expect(localeSwitchTarget('zh', path, ['en', 'zh'])).toMatch(/\/$/);
+      expect(localeSwitchTarget('zh', path, ['en'])).toMatch(/\/$/);
+    }
   });
 });
