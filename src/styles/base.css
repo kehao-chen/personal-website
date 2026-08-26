@@ -562,10 +562,10 @@ html.seq-pending::after {
     transform: translateY(-50%);
   }
 
-  /* --- 首頁：字標在上、編輯器視窗在下，不再互相疊 --- */
+  /* --- 首頁：字標置中、編輯器視窗在下，不再互相疊 --- */
   .wordmark {
-    /* 與 framing.ts 的 portraitLift 對齊：中心落在畫面高度 32% 處 */
-    top: 32%;
+    /* 字標得與脈衝環同心，環永遠畫在畫面正中央（見 framing.ts 的 baseY） */
+    top: 50%;
     transform: translateY(-50%);
   }
   .wordmark-sub { letter-spacing: 0.34em; }
@@ -577,8 +577,8 @@ html.seq-pending::after {
   .desktop {
     display: block;
     min-height: 0;
-    /* 讓出上半部給字標 */
-    padding-top: 46vh;
+    /* 字標置中後高度約佔 44vh–56vh，視窗要從它下緣之後才開始 */
+    padding-top: 59vh;
   }
   .desktop:not([data-open]) .vim {
     opacity: 1;

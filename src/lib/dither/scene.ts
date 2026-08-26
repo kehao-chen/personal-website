@@ -28,19 +28,20 @@ export function createScene(): DitherScene {
   granted.position.set(0, FRAMING.baseY, FRAMING.grantedZ);
   scene.add(granted);
 
+  // 線框球有兩件事會讓線消失，兩件都跟打光有關：
+  //   1. 細分度 2（320 面）的線在 2px 抖色格上互相干涉成一團灰。降到 1
+  //      （80 面），每條邊都佔得到獨立的格子。
+  //   2. 用受光材質的話，背光側的亮度會低於抖色門檻整片不見，看起來像半顆
+  //      球。線框不需要明暗——它的立體感來自輪廓與邊的交錯——所以改用不受
+  //      光的 MeshBasicMaterial，每條線一樣亮。
   const shell = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(FRAMING.shellRadius, 2),
-    new THREE.MeshStandardMaterial({
-      color: 0xffffff, roughness: 0.7, wireframe: true, transparent: true, opacity: 0,
+    new THREE.IcosahedronGeometry(FRAMING.shellRadius, 1),
+    new THREE.MeshBasicMaterial({
+      color: 0xffffff, wireframe: true, transparent: true, opacity: 0,
     }),
   );
   shell.position.set(0, FRAMING.baseY, FRAMING.shellZ);
   scene.add(shell);
-
-  scene.add(new THREE.AmbientLight(0xffffff, 0.3));
-  const key = new THREE.DirectionalLight(0xffffff, 2.2);
-  key.position.set(3, 4, 5);
-  scene.add(key);
 
   return {
     scene, camera, wordmark, granted, shell,

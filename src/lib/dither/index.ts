@@ -171,17 +171,21 @@ export function createDither(
 
       const wordmarkMaterial = activeWorld.wordmark.material as THREE.MeshBasicMaterial;
       const grantedMaterial = activeWorld.granted.material as THREE.MeshBasicMaterial;
-      const shellMaterial = activeWorld.shell.material as THREE.MeshStandardMaterial;
+      const shellMaterial = activeWorld.shell.material as THREE.MeshBasicMaterial;
 
-      const flickerDip = flicker > 0 ? 0.25 + Math.random() * 0.75 : 1;
+      // 抽動時只讓亮度掉一點點。深到 0.25 的話字標的灰階整片跌到抖色門檻
+      // 以下，筆畫散成點陣——「看不清楚」就是這麼來的。撕裂感由 uAmt 那條
+      // datamosh 負責，不需要靠變暗來表現。
+      const flickerDip = flicker > 0 ? 0.88 + Math.random() * 0.12 : 1;
       wordmarkMaterial.opacity = reading ? 0 : frame.wordmark * flickerDip;
       grantedMaterial.opacity = reading ? 0 : frame.granted;
-      shellMaterial.opacity = reading ? 0 : frame.scene * 0.5;
+      // 線框本來就只有一像素寬，降取樣還會再攤薄一次，對半打折就撐不過量化
+      shellMaterial.opacity = reading ? 0 : frame.scene * 0.7;
 
       activeWorld.shell.rotation.x = seconds * 0.09;
       activeWorld.shell.rotation.y = seconds * 0.14;
-      activeWorld.camera.position.x = Math.sin(seconds * 0.22) * 0.9;
-      activeWorld.camera.position.y = 1.6 + Math.sin(seconds * 0.3) * 0.2;
+      activeWorld.camera.position.x = Math.sin(seconds * 0.22) * FRAMING.driftX;
+      activeWorld.camera.position.y = FRAMING.baseY + Math.sin(seconds * 0.3) * FRAMING.driftY;
       activeWorld.camera.lookAt(0, FRAMING.baseY, 0);
 
       activeRenderer.setRenderTarget(activeTarget);

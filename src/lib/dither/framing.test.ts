@@ -42,9 +42,10 @@ describe('framePlane', () => {
     }
   });
 
-  it('直式螢幕把字標往上移，讓出下半部給終端機視窗', () => {
-    expect(word(IPHONE_14).y).toBeGreaterThan(FRAMING.baseY);
-    expect(word(IPHONE_SE).y).toBeGreaterThan(FRAMING.baseY);
+  it('字標永遠留在 baseY，才會與脈衝環同心', () => {
+    for (const aspect of [IPHONE_14, IPHONE_SE, IPAD_PORTRAIT, DESKTOP, 2.4]) {
+      expect(word(aspect).y).toBe(FRAMING.baseY);
+    }
   });
 
   it('永遠不放大超過設計尺寸', () => {
@@ -62,7 +63,7 @@ describe('framePlane', () => {
     const plate = framePlane(FRAMING.grantedWidth, FRAMING.grantedZ, IPHONE_14);
     expect(FRAMING.grantedWidth * plate.scale)
       .toBeLessThanOrEqual(visibleSize(FRAMING.grantedZ, IPHONE_14).width);
-    expect(plate.y).toBeGreaterThan(FRAMING.baseY);
+    expect(plate.y).toBe(FRAMING.baseY);
   });
 });
 
@@ -81,5 +82,29 @@ describe('frameShell', () => {
   it('球是背景，不跟著字標上移', () => {
     expect(frameShell(IPHONE_14).y).toBe(FRAMING.baseY);
     expect(frameShell(DESKTOP).y).toBe(FRAMING.baseY);
+  });
+});
+
+describe('相機游移振幅', () => {
+  /**
+   * 相機一橫移，位於 lookAt 目標前方的字標就跟螢幕中心（脈衝環的圓心）
+   * 分家。位移量 = 振幅 × (cameraZ - wordmarkZ) / cameraZ，換算成畫面寬度
+   * 的比例後必須小到只像抖動。
+   */
+  const driftFraction = (amplitude: number, aspect: number) => {
+    const parallax = (amplitude * (FRAMING.cameraZ - FRAMING.wordmarkZ)) / FRAMING.cameraZ;
+    return parallax / visibleSize(FRAMING.wordmarkZ, aspect).width;
+  };
+
+  it('桌面上字標離開中心不超過畫面寬度的 1.5%', () => {
+    expect(driftFraction(FRAMING.driftX, DESKTOP)).toBeLessThan(0.015);
+  });
+
+  it('最窄的手機上也不超過 3%', () => {
+    expect(driftFraction(FRAMING.driftX, IPHONE_SE)).toBeLessThan(0.03);
+  });
+
+  it('垂直振幅不大於水平振幅', () => {
+    expect(FRAMING.driftY).toBeLessThanOrEqual(FRAMING.driftX);
   });
 });
