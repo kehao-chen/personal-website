@@ -24,8 +24,9 @@ function textPlane({ width, height, canvasWidth, canvasHeight, draw }: TextPlane
   if (ctx) {
     // draw() 一律用設計座標，倍率只在這裡套一次
     ctx.scale(TEXTURE_SCALE, TEXTURE_SCALE);
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    // 畫布不填底色，字以外的地方 alpha 留 0。填黑底的話這個平面就是一塊
+    // 9.0 × 2.44 的不透明矩形，會把後面的線框球整條橫帶切掉——字標周圍
+    // 那塊「跟別處不一樣」的區域就是它。
     draw(ctx, canvasWidth, canvasHeight);
   }
 

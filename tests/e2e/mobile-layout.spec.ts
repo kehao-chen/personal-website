@@ -83,21 +83,21 @@ test('導覽列連結的點擊區高度達到 WCAG 2.5.8 的 24px', async ({ pag
   }
 });
 
-test('首頁的字標與編輯器視窗不重疊', async ({ page }) => {
+test('窄畫面首頁不出現 .profile 桌面，只留 hero', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('html')).toHaveClass(/seq-done/, { timeout: 10_000 });
 
-  const wordmark = await page.locator('.wordmark').boundingBox();
-  const win = await page.locator('.layout-front .vim').boundingBox();
-  expect(wordmark).not.toBeNull();
-  expect(win).not.toBeNull();
+  // 桌面隱喻是桌面版專屬。窄畫面上圖示與視窗都不該存在於畫面上——
+  // display:none 同時也把它們移出無障礙樹，不會有「讀得到但看不到」的內容。
+  await expect(page.locator('.desktop')).toBeHidden();
+  await expect(page.locator('.desktop-icon')).toBeHidden();
+  await expect(page.locator('.layout-front .vim')).toBeHidden();
 
-  // 桌面版是 flex-end 疊在背景上；窄畫面必須改成上下堆疊，否則編輯器視窗
-  // 會蓋在 KEHAO 上，看起來像 render 壞掉。
-  expect(
-    wordmark!.y + wordmark!.height,
-    '字標的底部應該在編輯器視窗上緣之上',
-  ).toBeLessThanOrEqual(win!.y);
+  // 少了視窗之後首頁不該還撐出可捲動的空白
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollHeight - document.documentElement.clientHeight,
+  );
+  expect(overflow, `首頁多出 ${overflow}px 的捲動空間`).toBeLessThanOrEqual(4);
 });
 
 test('程式碼區塊自己捲動，不撐破頁面', async ({ page }) => {

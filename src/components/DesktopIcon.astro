@@ -19,6 +19,13 @@ const { label, action, controls } = Astro.props;
   aria-expanded="true"
   aria-label={action}
 >
-  <span class="desktop-icon-glyph" aria-hidden="true"></span>
+  <!-- 檔案圖示。用 inline SVG 而不是 clip-path：折角要同時有「被切掉的紙角」
+       與「折起來的那一小片」兩個面，clip-path 切掉的邊連帶把描邊也切掉，斜邊
+       上畫不出線。SVG 就是兩個 path 的事。 -->
+  <svg class="desktop-icon-glyph" viewBox="0 0 24 30" aria-hidden="true" focusable="false">
+    <path class="glyph-page" d="M2.5 1.5H15l6.5 6.5v20.5h-19z" />
+    <path class="glyph-fold" d="M15 1.5V8h6.5z" />
+    <path class="glyph-lines" d="M6.5 14h11M6.5 18h11M6.5 22h7" />
+  </svg>
   <span class="desktop-icon-label">{label}</span>
 </button>

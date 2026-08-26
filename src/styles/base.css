@@ -149,19 +149,30 @@ a { color: var(--accent); }
   color: var(--muted);
   cursor: pointer;
 }
+/* 檔名要有實心底。背景是抖色雜訊，字直接壓上去會被點陣穿過去讀不清——
+   真的桌面環境也是這樣處理圖示標籤的。 */
+.desktop-icon-label {
+  padding: 0.15rem 0.4rem;
+  background: var(--ground);
+}
 .desktop-icon:hover, .desktop-icon:focus-visible {
   border-color: var(--line);
   color: var(--ink);
 }
 
-/* 檔案圖示：一個帶折角的方框，純 CSS，不引入圖檔 */
+/* 檔案圖示：紙張、折起來的角、三行示意文字。不引入圖檔。 */
 .desktop-icon-glyph {
-  width: 26px;
-  height: 32px;
-  border: 1px solid currentColor;
-  /* 右上角折角 */
-  clip-path: polygon(0 0, 68% 0, 100% 26%, 100% 100%, 0 100%);
+  display: block;
+  width: 30px;
+  height: 38px;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  fill: none;
 }
+/* 紙張填實心，圖示才不會被背景抖色從內部穿透 */
+.desktop-icon-glyph .glyph-page { fill: var(--panel); }
+.desktop-icon-glyph .glyph-fold { fill: var(--line); }
+.desktop-icon-glyph .glyph-lines { stroke-width: 1; }
 
 /* 關閉狀態：視窗收起。用 visibility 而非 display，才能有開關動畫
    （display:none 會讓 transform 轉場整個跳過，visibility 不會）。
@@ -570,23 +581,10 @@ html.seq-pending::after {
   }
   .wordmark-sub { letter-spacing: 0.34em; }
 
-  /* 窄畫面不做桌面隱喻：沒有圖示、沒有關閉鈕、視窗恆開。
-     桌面隱喻需要「圖示與視窗是兩個東西」的空間關係，320px 放不下；
-     而把自我介紹藏在一次點擊後面，在手機上是實質的內容損失。 */
-  .desktop-icon, .vim-close { display: none; }
-  .desktop {
-    display: block;
-    min-height: 0;
-    /* 字標置中後高度約佔 44vh–56vh，視窗要從它下緣之後才開始 */
-    padding-top: 59vh;
-  }
-  .desktop:not([data-open]) .vim {
-    opacity: 1;
-    visibility: visible;
-    transform: none;
-  }
-  .layout-front .vim { width: 100%; }
-  .vim-body { padding: 0.9rem 1rem 0.9rem calc(1rem + var(--gutter)); font-size: 0.8rem; }
+  /* 窄畫面完全不做桌面隱喻。桌面隱喻需要「圖示與視窗是兩個東西」的空間
+     關係，手機放不下；硬塞的結果是字標被擠出環心、視窗又佔掉整個畫面。
+     手機首頁就是純粹的 hero，自我介紹在 /about。 */
+  .desktop { display: none; }
 
   /* --- 終端機視窗：把被 padding 吃掉的寬度還給內容 --- */
   .win-bar, .win-foot { flex-wrap: wrap; gap: 0.45rem 0.7rem; }
