@@ -493,15 +493,27 @@ html.js .desktop:not([data-open]) .vim {
   color: var(--muted);
 }
 /* ============================== 版面 ============================== */
-/* 首頁是滿版的 hero／桌面環境，不該出現捲軸。這件事在這裡就結束了——版面元素
-   自己不長高，文件自然就沒有可捲的高度，不需要再去鎖 html/body 的 overflow。
+/* 首頁是滿版的 hero／桌面環境，捲不動——`.profile` 是釘在桌面上的檔案，不該
+   隨頁面滑走。
 
-   （鎖 html/body 那條規則測起來完全沒有作用，卻連帶把 404 一起鎖死：它的
-   class 是從導覽高亮用的 `current === 'home'` 推導的，而 404 也是
-   current="home"。一個真的需要捲動的閱讀版面因此讀不完——實測 320×400 少
-   26px，400% 縮放下少 170px，是 WCAG 1.4.10 的失敗案例。）
+   兩件事分開做，缺一不可：
+   1. `.layout-front` 自己把高度夾在一個視窗高，所以本站的內容不會撐出捲動空間。
+   2. `html` 直接鎖住 overflow，因為文件裡不是只有本站的內容——瀏覽器擴充功能
+      會往 <html> 底下塞東西（實測某個擴充在 body 之後掛了一塊 188px 的工具列，
+      捲軸就是這樣冒出來的）。第 1 點管不到 body 以外的兄弟節點，只有鎖 html
+      才管得到。
 
-   不加 min-height: 100vh——min 會贏過 height，把下面那行 dvh 的退路整個抵銷掉；
+   條件只認 `.layout-front` 這個版面訊號，不認導覽高亮用的 `current`——404 也是
+   current="home"，用它推導的話會把一個真的需要捲動的閱讀版面鎖死（實測 320×400
+   少 26px、400% 縮放下少 170px 讀不到，WCAG 1.4.10）。
+
+   不另外寫 class 版的退路：`:has()` 與 class 選擇器放在同一個選擇器群組裡的話，
+   遇到不支援 `:has()` 的瀏覽器會整條規則失效，class 那半邊也退不了。`:has()`
+   自 2023 年底是 Baseline，真的退化了後果也只是多一條捲軸。 */
+html:has(.layout-front) {
+  overflow: hidden;
+}
+/* 不加 min-height: 100vh——min 會贏過 height，把下面那行 dvh 的退路整個抵銷掉；
    iOS Safari 網址列展開時 100vh > 100dvh，元素就會比視窗還高。 */
 .layout-front {
   position: relative;

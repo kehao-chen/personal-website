@@ -36,6 +36,41 @@ test.describe('首頁不出捲軸', () => {
       expect(opened.scrollH, '展開視窗後撐出了捲動空間').toBeLessThanOrEqual(opened.clientH);
     });
   }
+
+  /**
+   * 文件裡不是只有本站的內容。瀏覽器擴充功能會往 <html> 底下、<body> 之後掛
+   * 東西（實測某個擴充掛了一塊 188px 的工具列），那塊東西撐高的是 html 而不是
+   * body——`.layout-front` 自己夾住高度管不到它，只有鎖 html 的 overflow 才管
+   * 得到。這裡照那個機制放一塊一樣的兄弟節點，決定性地重現同一種文件狀態。
+   *
+   * 斷言用真的滾輪事件而不是 scrollHeight：擴充的那塊東西還在，scrollHeight
+   * 本來就會超過視窗，重點是使用者滑不動——`.profile` 不會被滑走。
+   */
+  test('<html> 底下被塞了東西，首頁照樣滑不動', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveClass(/seq-done/, { timeout: 10_000 });
+    await page.locator('.desktop-icon').click();
+    await expect(page.locator('#profile-window')).toBeVisible();
+
+    const profileTop = async () =>
+      page.locator('#profile-window').evaluate((el) => Math.round(el.getBoundingClientRect().top));
+    const before = await profileTop();
+
+    await page.evaluate(() => {
+      const intruder = document.createElement('div');
+      intruder.id = 'intruder';
+      intruder.style.height = '400px';
+      document.documentElement.appendChild(intruder);
+    });
+
+    await page.mouse.move(720, 450);
+    await page.mouse.wheel(0, 600);
+    await page.waitForTimeout(200);
+
+    expect(await page.evaluate(() => window.scrollY), '首頁被滑動了').toBe(0);
+    expect(await profileTop(), '.profile 被滑走了').toBe(before);
+  });
 });
 
 /**
