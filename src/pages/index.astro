@@ -16,15 +16,13 @@ import { t } from '../lib/i18n/ui';
 >
   <Wordmark />
   <HeroSequence locale="en" />
-  <main class="page layout-front">
+  <main id="main-content" class="page layout-front" tabindex="-1">
     <div class="desktop">
       <DesktopIcon label=".profile" action={t('en', 'profile.open')} controls="profile-window" />
       <VimWindow path="~/.profile" id="profile-window" closeLabel={t('en', 'profile.close')}>
-        <p class="vim-line">Cloud-native &amp; AI infrastructure. I build the boring parts that let the interesting parts stay up.</p>
-        <p class="vim-line"></p>
-        <p class="vim-line soft">Notes mostly in 中文, occasionally English.</p>
-        <p class="vim-line"></p>
-        <p class="vim-line soft">STATUS <span class="hot">ONLINE</span> · TAIPEI · AZURE / KUBERNETES / LLM AGENTS</p>
+        <p class="vim-line">INTJ-O-H · Thoroughly average 1x engineer.</p>
+        <p class="vim-line">Hauling bricks in Azure &amp; K8s. Anxiety is just compute starvation.</p>
+        <p class="vim-line soft">STATUS <span class="hot">ONLINE</span> · TAIPEI · GITHUB <a href="https://github.com/kehao-chen" target="_blank" rel="noopener noreferrer">@kehao-chen</a></p>
       </VimWindow>
     </div>
   </main>

@@ -20,7 +20,7 @@ const tags = collectTags(posts);
   current="writing"
 >
   <SiteBackdrop />
-  <main class="page layout-list">
+  <main id="main-content" class="page layout-list" tabindex="-1">
     <TerminalWindow
       path="~/writing"
       meta={`${posts.length} ${t('zh', 'writing.count')}`}

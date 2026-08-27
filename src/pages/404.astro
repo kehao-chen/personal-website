@@ -14,7 +14,7 @@ const availableLocales = ['en'] as const;
   current="home"
   availableLocales={[...availableLocales]}
 >
-  <main class="page layout-reading">
+  <main id="main-content" class="page layout-reading" tabindex="-1">
     <TerminalWindow path="~/404" deco="EXIT 1" footLeft="ERROR" footItems={['HTTP 404']} variant="prose">
       <h1>{t('en', 'error.404.title')}</h1>
       <p>{t('en', 'error.404.body')}</p>

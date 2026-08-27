@@ -32,7 +32,7 @@ const availableLocales: Locale[] = translation ? ['en', 'zh'] : ['en'];
   current="writing"
   availableLocales={availableLocales}
 >
-  <main class="page layout-reading">
+  <main id="main-content" class="page layout-reading" tabindex="-1">
     <TerminalWindow
       path={`~/writing/${post.slug}.md`}
       meta={meta}
@@ -40,6 +40,7 @@ const availableLocales: Locale[] = translation ? ['en', 'zh'] : ['en'];
       footItems={[dateLabel, ...(post.tags.length ? [post.tags.join(' · ')] : [])]}
       variant="prose"
     >
+      <h1>{post.title}</h1>
       {translation ? (
         <p class="notice">
           {t('en', 'post.translationAvailable')} →
@@ -50,7 +51,6 @@ const availableLocales: Locale[] = translation ? ['en', 'zh'] : ['en'];
       ) : (
         <p class="notice">{t('en', 'post.onlyLanguage')}</p>
       )}
-      <h1>{post.title}</h1>
       <Content />
     </TerminalWindow>
   </main>

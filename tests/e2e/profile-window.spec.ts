@@ -15,7 +15,7 @@ test('英文首頁的 profile 內容住在 vim 視窗裡', async ({ page }) => {
   await page.goto('/');
   await openProfile(page);
   const win = page.locator('.vim');
-  await expect(win).toContainText('Cloud-native & AI infrastructure');
+  await expect(win).toContainText('1x engineer');
   // 標題列與底部檔名列都顯示路徑
   await expect(win.locator('.vim-path')).toHaveText('~/.profile');
   await expect(win.locator('.vim-foot')).toContainText('~/.profile');
@@ -25,7 +25,7 @@ test('中文首頁同樣使用 vim 視窗', async ({ page }) => {
   await page.goto('/zh/');
   await openProfile(page);
   const win = page.locator('.vim');
-  await expect(win).toContainText('我做雲端基礎建設');
+  await expect(win).toContainText('1x 軟體工程師');
 });
 
 test('CSS counter 規則產生邏輯行號，不進無障礙樹也不進文字內容', async ({ page }) => {
@@ -33,7 +33,7 @@ test('CSS counter 規則產生邏輯行號，不進無障礙樹也不進文字�
 
   // 邏輯行數與內容驗證
   const lines = page.locator('.vim-line');
-  await expect(lines).toHaveCount(5);
+  await expect(lines).toHaveCount(3);
 
   // 行號不進文字內容：textContent 不含行號數字
   const bodyText = await page.locator('.vim-body').textContent();
@@ -139,7 +139,7 @@ test('停用 JavaScript 時視窗是開的，內容完整可見', async ({ brows
   const page = await ctx.newPage();
   await page.goto('/');
   await expect(page.locator('#profile-window')).toBeVisible();
-  await expect(page.locator('#profile-window')).toContainText('Cloud-native & AI infrastructure');
+  await expect(page.locator('#profile-window')).toContainText('1x engineer');
   await ctx.close();
 });
 

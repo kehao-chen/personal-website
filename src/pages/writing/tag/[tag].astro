@@ -36,7 +36,7 @@ const availableLocales: Locale[] = hasZh ? ['en', 'zh'] : ['en'];
   current="writing"
   availableLocales={availableLocales}
 >
-  <main class="page layout-list">
+  <main id="main-content" class="page layout-list" tabindex="-1">
     <TerminalWindow
       path="~/writing"
       meta={`${posts.length} ${t('en', 'writing.count')}`}

@@ -6,23 +6,100 @@ import SiteBackdrop from '../components/SiteBackdrop.astro';
 <FrontLayout
   locale="en"
   title="About — KEHAO"
-  description="Who I am and what I work on."
+  description="Who I am, what I build, and what I'm stubborn about."
   path="/about"
   current="about"
 >
   <SiteBackdrop />
-  <main class="page layout-reading">
-    <TerminalWindow path="~/about.md" meta="READ-ONLY" footLeft="LINK OK" footItems={['GITHUB · LINKEDIN · RSS']} variant="prose">
+  <main id="main-content" class="page layout-reading" tabindex="-1">
+    <TerminalWindow
+      path="~/about.md"
+      meta="READ-ONLY"
+      footLeft="LINK OK"
+      footItems={[
+        { label: 'GITHUB', href: 'https://github.com/kehao-chen', external: true },
+        { label: 'LINKEDIN', href: 'https://www.linkedin.com/in/kehao-chen/?locale=en', external: true },
+        { label: 'X', href: 'https://x.com/_hhnj', external: true },
+        { label: 'FACEBOOK', href: 'https://www.facebook.com/happy.hacking.ninja', external: true },
+        { label: 'RSS', href: '/rss.xml' },
+      ]}
+      variant="prose"
+    >
       <h1>About</h1>
+
       <p>
-        I work on cloud infrastructure, mostly on Azure and Kubernetes. Recently
-        most of my time goes into making LLM agents production-grade — not demos,
-        but systems that can be deployed, audited, and debugged when they break.
+        INTJ-O-H. Self-certified, thoroughly average <strong>1x engineer</strong>.
       </p>
+
+      <blockquote>
+        <p>Anxiety is just compute starvation.</p>
+      </blockquote>
+
+      <h2>Specialties &amp; Current Focus</h2>
       <p>
-        This site is where I keep my notes. Most technical writing is in Traditional
-        Chinese, because that is the language I think in. Some of it gets an English
-        version.
+        I build cloud-native infrastructure, mostly on Azure and Kubernetes. Recently most of my time
+        goes into making LLM agents production-grade — not demos, but systems that can be deployed,
+        audited, and debugged when they break.
+      </p>
+      <ul>
+        <li>Hauling bricks in the cloud, rolling around in Kubernetes, getting lost in the Azure Portal.</li>
+        <li>Directing an AI to write code, then wiping up after it.</li>
+        <li>A committed believer in SDD (Spec-Driven Development) &amp; Clean Architecture — once the spec is written clearly enough, the blame can be transferred to the spec with a completely clean conscience.</li>
+        <li>Producing YAML. Vast quantities of YAML.</li>
+      </ul>
+
+      <h2>A few things I'm stubborn about</h2>
+      <ul>
+        <li><strong>Static if it can be static</strong>: if the free tier fits, I'm not running a server.</li>
+        <li><strong>Tools that get out of the way</strong>: <code>bun</code>, <code>uv</code>, <code>just</code>. No install step I have to explain twice.</li>
+        <li><strong>Pure functions over faith</strong>: anything I'd rather not have to take on faith gets written as a pure function with tests.</li>
+        <li>If I can't see what it's doing, it doesn't count as working.</li>
+        <li>If an agent built it, post the bill too.</li>
+      </ul>
+
+      <h2>Certifications</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Certification</th>
+            <th>Issuer</th>
+            <th>Verification</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Azure Solutions Architect Expert</td>
+            <td>Microsoft</td>
+            <td><a href="https://learn.microsoft.com/api/credentials/share/en-us/kehao-chen/5C1C6D2DCE6C5DAE?sharingId=339B6985F6579064" target="_blank" rel="noopener noreferrer">verify</a></td>
+          </tr>
+          <tr>
+            <td>DevOps Engineer Expert</td>
+            <td>Microsoft</td>
+            <td><a href="https://learn.microsoft.com/api/credentials/share/en-us/kehao-chen/88780FEC56298A7D?sharingId=339B6985F6579064" target="_blank" rel="noopener noreferrer">verify</a></td>
+          </tr>
+          <tr>
+            <td>Azure Administrator Associate</td>
+            <td>Microsoft</td>
+            <td><a href="https://learn.microsoft.com/api/credentials/share/en-us/kehao-chen/AA2D84683A352AC?sharingId=339B6985F6579064" target="_blank" rel="noopener noreferrer">verify</a></td>
+          </tr>
+          <tr>
+            <td>Azure AI Engineer Associate</td>
+            <td>Microsoft</td>
+            <td><a href="https://learn.microsoft.com/api/credentials/share/en-us/kehao-chen/A571699F719CAB4C?sharingId=339B6985F6579064" target="_blank" rel="noopener noreferrer">verify</a></td>
+          </tr>
+          <tr>
+            <td>CKA: Certified Kubernetes Administrator</td>
+            <td>The Linux Foundation</td>
+            <td><a href="https://www.credly.com/badges/cb96f42a-de8f-4948-b6a0-61365bdeff4e/linked_in_profile" target="_blank" rel="noopener noreferrer">verify</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Whereabouts</h2>
+      <p>
+        Taipei, mostly translating laterally between an office chair and a chair at home.
+        Surfaces now and then at tech meetups around town; DevOpsDays Taipei and JCConf are the two I never miss.
+        Hiked the 2026 Taipei Grand Trail (臺北大縱走).
       </p>
     </TerminalWindow>
   </main>

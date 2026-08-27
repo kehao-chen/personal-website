@@ -2,6 +2,7 @@ import type { Locale } from '../posts';
 
 const STRINGS = {
   en: {
+    'nav.skipToContent': 'Skip to content',
     'nav.home': 'HOME',
     'nav.writing': 'WRITING',
     'nav.about': 'ABOUT',
@@ -19,6 +20,7 @@ const STRINGS = {
     'profile.close': 'Close ~/.profile',
   },
   zh: {
+    'nav.skipToContent': '跳至主要內容',
     'nav.home': 'HOME',
     'nav.writing': 'WRITING',
     'nav.about': 'ABOUT',

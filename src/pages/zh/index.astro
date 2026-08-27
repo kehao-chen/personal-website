@@ -16,15 +16,13 @@ import { t } from '../../lib/i18n/ui';
 >
   <Wordmark />
   <HeroSequence locale="zh" />
-  <main class="page layout-front">
+  <main id="main-content" class="page layout-front" tabindex="-1">
     <div class="desktop">
       <DesktopIcon label=".profile" action={t('zh', 'profile.open')} controls="profile-window" />
       <VimWindow path="~/.profile" id="profile-window" closeLabel={t('zh', 'profile.close')}>
-        <p class="vim-line">我做雲端基礎建設，主要在 Azure 與 Kubernetes 上。</p>
-        <p class="vim-line"></p>
-        <p class="vim-line soft">近幾年花很多時間在 LLM agent 的工程化。</p>
-        <p class="vim-line"></p>
-        <p class="vim-line soft">STATUS <span class="hot">ONLINE</span> · TAIPEI · AZURE / KUBERNETES / LLM AGENTS</p>
+        <p class="vim-line">INTJ-O-H。自我認證的平庸 1x 軟體工程師。</p>
+        <p class="vim-line">在雲端搬磚、在 K8s 打滾。焦慮來自於算力不足。</p>
+        <p class="vim-line soft">STATUS <span class="hot">ONLINE</span> · TAIPEI · GITHUB <a href="https://github.com/kehao-chen" target="_blank" rel="noopener noreferrer">@kehao-chen</a></p>
       </VimWindow>
     </div>
   </main>

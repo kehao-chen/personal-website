@@ -11,15 +11,94 @@ import SiteBackdrop from '../../components/SiteBackdrop.astro';
   current="about"
 >
   <SiteBackdrop />
-  <main class="page layout-reading">
-    <TerminalWindow path="~/about.md" meta="READ-ONLY" footLeft="LINK OK" footItems={['GITHUB · LINKEDIN · RSS']} variant="prose">
+  <main id="main-content" class="page layout-reading" tabindex="-1">
+    <TerminalWindow
+      path="~/about.md"
+      meta="READ-ONLY"
+      footLeft="LINK OK"
+      footItems={[
+        { label: 'GITHUB', href: 'https://github.com/kehao-chen', external: true },
+        { label: 'LINKEDIN', href: 'https://www.linkedin.com/in/kehao-chen/?locale=zh_TW', external: true },
+        { label: 'X', href: 'https://x.com/_hhnj', external: true },
+        { label: 'FACEBOOK', href: 'https://www.facebook.com/happy.hacking.ninja', external: true },
+        { label: 'RSS', href: '/zh/rss.xml' },
+      ]}
+      variant="prose"
+    >
       <h1>關於</h1>
+
+      <p>
+        INTJ-O-H。自我認證的平庸 <strong>1x 軟體工程師</strong>。
+      </p>
+
+      <blockquote>
+        <p>焦慮來自於算力不足</p>
+      </blockquote>
+
+      <h2>專長與近期</h2>
       <p>
         我做雲端基礎建設，主要在 Azure 與 Kubernetes 上。近幾年花很多時間在 LLM agent
         的工程化——不是 demo，是要能上線、能被稽核、出事能查的那種。
       </p>
+      <ul>
+        <li>在雲端裡搬磚、在 K8s 裡打滾、在 Azure Portal 裡迷路。</li>
+        <li>指揮 AI 寫 Code，然後幫它擦屁股。</li>
+        <li>熱衷 SDD（Spec-Driven Development）與 Clean Architecture，畢竟把規格寫清楚之後，鍋就可以名正言順地甩給 Spec 惹。</li>
+        <li>產出 YAML。大量的 YAML。</li>
+      </ul>
+
+      <h2>幾條偏執</h2>
+      <ul>
+        <li><strong>能靜態就靜態</strong>：free tier 塞得下就不自己養機器。</li>
+        <li><strong>工具要不擋路</strong>：<code>bun</code>、<code>uv</code>、<code>just</code>，安裝步驟不用解釋第二次。</li>
+        <li><strong>凡是只能靠相信的東西，就寫成純函式加測試</strong>。</li>
+        <li>看不到它在幹嘛，就不算會動。</li>
+        <li>如果是 agent 做的，就把帳單一起貼出來。</li>
+      </ul>
+
+      <h2>證照</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>證照</th>
+            <th>發證機構</th>
+            <th>驗證</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Azure Solutions Architect Expert</td>
+            <td>Microsoft</td>
+            <td><a href="https://learn.microsoft.com/api/credentials/share/en-us/kehao-chen/5C1C6D2DCE6C5DAE?sharingId=339B6985F6579064" target="_blank" rel="noopener noreferrer">verify</a></td>
+          </tr>
+          <tr>
+            <td>DevOps Engineer Expert</td>
+            <td>Microsoft</td>
+            <td><a href="https://learn.microsoft.com/api/credentials/share/en-us/kehao-chen/88780FEC56298A7D?sharingId=339B6985F6579064" target="_blank" rel="noopener noreferrer">verify</a></td>
+          </tr>
+          <tr>
+            <td>Azure Administrator Associate</td>
+            <td>Microsoft</td>
+            <td><a href="https://learn.microsoft.com/api/credentials/share/en-us/kehao-chen/AA2D84683A352AC?sharingId=339B6985F6579064" target="_blank" rel="noopener noreferrer">verify</a></td>
+          </tr>
+          <tr>
+            <td>Azure AI Engineer Associate</td>
+            <td>Microsoft</td>
+            <td><a href="https://learn.microsoft.com/api/credentials/share/en-us/kehao-chen/A571699F719CAB4C?sharingId=339B6985F6579064" target="_blank" rel="noopener noreferrer">verify</a></td>
+          </tr>
+          <tr>
+            <td>CKA: Certified Kubernetes Administrator</td>
+            <td>The Linux Foundation</td>
+            <td><a href="https://www.credly.com/badges/cb96f42a-de8f-4948-b6a0-61365bdeff4e/linked_in_profile" target="_blank" rel="noopener noreferrer">verify</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>出沒地點</h2>
       <p>
-        這個網站是我放筆記的地方。技術文章多半是中文，因為那是我思考的語言；少數會有英文版。
+        台北，主要在辦公室椅子上和家裡椅子上之間平移。
+        偶爾去技術社群的 meetup 晃晃，DevOpsDays Taipei 和 JCConf 則是每年一定到。
+        爬山，已達成 2026 臺北大縱走。
       </p>
     </TerminalWindow>
   </main>

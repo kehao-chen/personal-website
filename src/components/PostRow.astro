@@ -13,6 +13,7 @@ const dateLabel = post.date.toISOString().slice(0, 10);
 ---
 <a class="post-row" href={href}>
   <span class="post-title">{post.title}</span>
+  {post.description && <span class="post-desc">{post.description}</span>}
   <span class="post-meta">
     <span class="post-lang">{langLabel}</span>
     <span>{dateLabel}</span>
