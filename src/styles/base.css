@@ -498,10 +498,20 @@ html.js .desktop:not([data-open]) .vim {
 
    兩件事分開做，缺一不可：
    1. `.layout-front` 自己把高度夾在一個視窗高，所以本站的內容不會撐出捲動空間。
-   2. `html` 直接鎖住 overflow，因為文件裡不是只有本站的內容——瀏覽器擴充功能
-      會往 <html> 底下塞東西（實測某個擴充在 body 之後掛了一塊 188px 的工具列，
-      捲軸就是這樣冒出來的）。第 1 點管不到 body 以外的兄弟節點，只有鎖 html
+   2. `html` 直接把溢出裁掉，因為文件裡不是只有本站的內容——瀏覽器擴充功能會往
+      <html> 底下塞東西（實測某個擴充在 body 之後掛了一塊 188px 的工具列，捲軸
+      就是這樣冒出來的）。第 1 點管不到 body 以外的兄弟節點，只有從 html 下手
       才管得到。
+
+   用 `clip` 而不是 `hidden`：`hidden` 的盒子仍然是個捲動容器，只是不給捲軸——
+   任何程式捲動（scrollIntoView、捲動錨定、擴充功能）照樣推得動它，而使用者
+   推不回來。實測在真實瀏覽器裡就發生了：整頁被推到底 188px，字標與導覽是
+   fixed 所以看不出來，只有 main.page 裡的 .profile 悄悄滑出畫面。`clip` 根本
+   不建立捲動容器，推不動。前面留一行 `hidden` 給不支援 clip 的舊瀏覽器當退路。
+
+   但 `clip` 在根元素上的行為各版本不一（同一段程式碼在使用者的 Chrome 推不動、
+   在測試用的 Chromium 推得動），所以不把「.profile 不會滑走」壓在它身上——
+   下面讓 `.layout-front` 自己 fixed，文件真的被推動了也不關它的事。
 
    條件只認 `.layout-front` 這個版面訊號，不認導覽高亮用的 `current`——404 也是
    current="home"，用它推導的話會把一個真的需要捲動的閱讀版面鎖死（實測 320×400
@@ -512,11 +522,21 @@ html.js .desktop:not([data-open]) .vim {
    自 2023 年底是 Baseline，真的退化了後果也只是多一條捲軸。 */
 html:has(.layout-front) {
   overflow: hidden;
+  overflow: clip;
 }
-/* 不加 min-height: 100vh——min 會贏過 height，把下面那行 dvh 的退路整個抵銷掉；
-   iOS Safari 網址列展開時 100vh > 100dvh，元素就會比視窗還高。 */
+/* 首頁整頁就是一個視窗大的桌面，所以直接釘在視窗上：文件萬一真的被誰推動了
+   （見上面那段），釘住的東西不會跟著跑，.profile 就不會滑出畫面。
+
+   用 top/left/right + height 而不是 inset: 0：fixed 的 inset 是相對「初始包含
+   區塊」，在 iOS Safari 那是網址列展開前的大視窗（lvh），會比看得見的範圍高；
+   指定 height 才吃得到 dvh。
+
+   不加 min-height: 100vh——min 會贏過 height，把下面那行 dvh 的退路整個抵銷掉。 */
 .layout-front {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;

@@ -45,6 +45,10 @@ test.describe('首頁不出捲軸', () => {
    *
    * 斷言用真的滾輪事件而不是 scrollHeight：擴充的那塊東西還在，scrollHeight
    * 本來就會超過視窗，重點是使用者滑不動——`.profile` 不會被滑走。
+   *
+   * 程式捲動也要一起擋。`overflow: hidden` 的盒子仍然是捲動容器，
+   * scrollIntoView／捲動錨定／擴充功能推得動它，而使用者推不回來；真實瀏覽器
+   * 裡就這樣把整頁推到底，字標與導覽是 fixed 看不出來，只有 .profile 滑走了。
    */
   test('<html> 底下被塞了東西，首頁照樣滑不動', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -68,8 +72,14 @@ test.describe('首頁不出捲軸', () => {
     await page.mouse.wheel(0, 600);
     await page.waitForTimeout(200);
 
-    expect(await page.evaluate(() => window.scrollY), '首頁被滑動了').toBe(0);
-    expect(await profileTop(), '.profile 被滑走了').toBe(before);
+    expect(await page.evaluate(() => window.scrollY), '滾輪把首頁滑動了').toBe(0);
+    expect(await profileTop(), '.profile 被滾輪滑走了').toBe(before);
+
+    // 就算文件真的被程式推動了（`clip` 在根元素上的行為各版本不一，不能只靠它），
+    // 釘住的版面也不該跟著跑——這才是使用者看得到的那件事
+    await page.evaluate(() => window.scrollTo(0, 800));
+    await page.waitForTimeout(200);
+    expect(await profileTop(), '.profile 被程式推走了').toBe(before);
   });
 });
 
