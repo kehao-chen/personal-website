@@ -11,12 +11,15 @@ interface Props {
 const { label, action, controls } = Astro.props;
 ---
 
+<!-- 視窗預設收起，所以 aria-expanded 在標記裡就是 false。唯一的例外是沒有 JS
+     的情況：那時視窗維持展開（見 base.css 的 html.js），但這顆按鈕也按不動，
+     不會有人依它的狀態去操作。 -->
 <button
   type="button"
   class="desktop-icon"
   data-profile-toggle
   aria-controls={controls}
-  aria-expanded="true"
+  aria-expanded="false"
   aria-label={action}
 >
   <!-- 檔案圖示。用 inline SVG 而不是 clip-path：折角要同時有「被切掉的紙角」

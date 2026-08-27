@@ -1,12 +1,13 @@
 /**
  * 首頁 .profile 視窗的開關。
  *
- * 狀態是 wrapper 上的 `data-open`，HTML 預設就帶著它——所以沒有 JS 時視窗
- * 是開的，這個模組只負責「收起來」與「再打開」。任何「預設隱藏、靠 JS 顯示」
- * 的寫法都會讓無 JS 訪客看不到首頁唯一的自我介紹。
+ * 狀態是 wrapper 上的 `data-open`。標記裡沒有它——桌面上 .profile 是一個要點
+ * 開的檔案，預設收起。「沒有 JS 就看不到自我介紹」這個風險不靠這裡處理，而是
+ * 在 CSS：收起的規則掛在 `html.js` 底下（見 base.css），沒有 JS 就不生效，
+ * 視窗維持展開，因為那時圖示按不動，收起來就再也打不開。
  *
  * 不存 sessionStorage：視窗活在 `main.page` 裡（換頁會被 swap），每次回到
- * 首頁都是全新的 DOM，重置為開啟是自然結果也是想要的行為。
+ * 首頁都是全新的 DOM，重置為收起是自然結果也是想要的行為。
  */
 
 const OPEN_ATTR = 'data-open';
@@ -31,17 +32,8 @@ function realToggles(): HTMLElement[] {
   return [...document.querySelectorAll<HTMLElement>('[data-profile-toggle]')].filter(isReal);
 }
 
-/**
- * 序列進行中視窗被 `html.seq-pending .vim { visibility: hidden }` 視覺收起，
- * 但 `data-open` 沒被動過（收起是序列造成的，不是關閉）。aria-expanded 該
- * 反映使用者實際感知到的狀態，所以序列期間一律回報 false。
- */
-function ariaOpen(): boolean {
-  return isOpen() && !document.documentElement.classList.contains('seq-pending');
-}
-
 function reflectAria(): void {
-  const open = String(ariaOpen());
+  const open = String(isOpen());
   for (const toggle of realToggles()) {
     toggle.setAttribute('aria-expanded', open);
   }
@@ -75,7 +67,8 @@ function isOpen(): boolean {
 function onClick(event: MouseEvent): void {
   // 序列進行中，所有點擊屬於「跳過序列」，不搶（與 onKeydown 同一條規則）。
   // #fx 的 canvas 蓋住畫面但 pointer-events:none，滑鼠打得到底下（此時看不見的）
-  // .desktop-icon；沒有這個守衛，使用者為了跳過序列點下去，會同時把視窗關掉。
+  // .desktop-icon；沒有這個守衛，使用者為了跳過序列點下去，會順手把一個他還
+  // 沒看見的視窗打開。
   if (document.documentElement.classList.contains('seq-pending')) return;
 
   const target = event.target as HTMLElement | null;
@@ -143,16 +136,4 @@ export function initProfileWindow(): void {
     pendingColon = false;
     reflectAria();
   });
-
-  // seq-pending 的加／解由 site-dither.ts 依序列時間軸決定，這裡不重新做一份
-  // 時序，只是被動鏡射那個已經存在的 class 到 aria-expanded 上。<html> 本身
-  // 跨換頁不會被替換，這個 observer 只需要掛一次。
-  new MutationObserver(reflectAria).observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['class'],
-  });
-
-  // 首次載入時 seq-pending 可能已經在 <head> 的 inline script 裡被加上了，
-  // 上面的 observer 只會抓到「之後」的變化，這裡補一次初始狀態。
-  reflectAria();
 }

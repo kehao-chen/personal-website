@@ -25,7 +25,9 @@ const langHref = localeSwitchTarget(otherLocale, path, availableLocales);
 ---
 
 <nav class="site-nav">
-  <a class="brand" href={localizePath(locale, '/')}>HAPPYHACKING.NINJA</a>
+  <!-- 游標是獨立的 span，不是 .brand::after：窄畫面那邊已經用 `.site-nav a::after`
+       把每個連結的點擊區撐到 44px，兩者搶同一個偽元素的話品牌會失去觸控熱區。 -->
+  <a class="brand" href={localizePath(locale, '/')}>HAPPYHACKING.NINJA<span class="brand-caret" aria-hidden="true"></span></a>
   {links.map((link) => (
     <a
       href={link.href}

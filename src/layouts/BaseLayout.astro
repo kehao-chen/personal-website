@@ -44,6 +44,21 @@ const htmlLang = bcp47(locale);
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <!-- 有 JS 才成立的互動，樣式上要能區分出來（目前是首頁 .profile 視窗的
+         「預設收起、點圖示才展開」）。必須是同步的 inline script，跑在首次繪製
+         之前，否則視窗會先展開閃一下再被收起來。
+
+         換頁時要補回來：ClientRouter 會把 <html> 的屬性換成新文件的那一份，
+         class 一起被蓋掉，而 head 裡內容相同的 inline script 不會重跑。
+         astro:after-swap 在交換之後、繪製之前同步觸發，正是補這種 <html>
+         狀態的地方。 -->
+    <script is:inline>
+      (function () {
+        var mark = function () { document.documentElement.classList.add('js'); };
+        mark();
+        document.addEventListener('astro:after-swap', mark);
+      })();
+    </script>
     {sequence && (
       <script is:inline>
         (function () {

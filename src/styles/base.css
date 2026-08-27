@@ -65,6 +65,28 @@ a { color: var(--accent); }
   background: linear-gradient(var(--ground) 62%, transparent);
 }
 .site-nav .brand { margin-right: auto; color: var(--ink); text-decoration: none; }
+
+/* 終端機游標。用實心方塊而不是「▌」這類字元：字元的寬高由字型的字面框決定，
+   換一套等寬字就變一個樣，方塊則是自己算的，而且不會被螢幕閱讀器唸出來。
+
+   基準狀態刻意是「亮著」：@keyframes 只負責把它按掉，所以 prefers-reduced-motion
+   把動畫關掉之後，游標仍然看得見，只是不閃——終端機的游標本來就是常亮的那一半。 */
+.brand-caret {
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  /* 品牌本身有 0.22em 字距，這裡只補一點點，游標才貼著最後一個字母 */
+  margin-left: 0.08em;
+  vertical-align: -0.14em;
+  background: var(--accent);
+  animation: brand-caret 1.06s linear infinite;
+}
+/* 硬切，不淡入淡出：49%→50% 之間那 10ms 的過渡看不出來，
+   但省掉了 steps() 在不同瀏覽器上對端點的分歧解讀。 */
+@keyframes brand-caret {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
 .nav-link, .nav-lang {
   color: var(--muted);
   text-decoration: none;
@@ -174,29 +196,27 @@ a { color: var(--accent); }
 .desktop-icon-glyph .glyph-fold { fill: var(--line); }
 .desktop-icon-glyph .glyph-lines { stroke-width: 1; }
 
-/* 關閉狀態：視窗收起。用 visibility 而非 display，才能有開關動畫
-   （display:none 會讓 transform 轉場整個跳過，visibility 不會）。
+/* 關閉狀態：視窗收起。桌面上 .profile 預設就是關的——桌面隱喻的重點是「檔案
+   要點開」，一進站就攤開的視窗只是一塊沒有來由的面板。
+
+   `html.js` 這一層是漸進增強的支點：沒有 JS 時圖示按不動，收起的視窗就永遠
+   打不開，所以那種情況下這條規則整條不生效，視窗維持展開，首頁唯一的自我介紹
+   照樣讀得到。js class 由 <head> 的同步 inline script 加上，先於首次繪製，
+   不會有「先展開再收起」的閃動。
+
+   用 visibility 而非 display，才能有開關動畫（display:none 會讓 transform
+   轉場整個跳過，visibility 不會）。
 
    opacity 不放進 transition：淡入淡出的中間格會讓文字疊在半透明背景上，
-   對比不足，被 axe 抓到（Lighthouse 在序列剛結束、.vim 從 seq-pending
-   的 opacity:0 revert 回預設值的那 120ms 窗口內取樣，穩定命中）。
-   opacity 與 visibility 因此都瞬間切換，「彈出」的動態感全部交給
-   transform: scale(0.97) 這一段。 */
-.desktop:not([data-open]) .vim {
+   對比不足，被 axe 抓到。opacity 與 visibility 因此都瞬間切換，「彈出」的
+   動態感全部交給 transform: scale(0.97) 這一段。 */
+html.js .desktop:not([data-open]) .vim {
   opacity: 0;
   visibility: hidden;
   transform: scale(0.97);
 }
 .vim {
   transition: transform 120ms ease-out;
-}
-
-/* 序列進行中一律收起，與其他內容一起在 chrome 長出來時硬切露出。
-   這一條同時是「無 JS 也正確」的關鍵：seq-pending 由 <head> 的 inline script
-   設定，沒有 JS 就不會有這個 class，視窗自然是開的。 */
-html.seq-pending .vim {
-  opacity: 0;
-  visibility: hidden;
 }
 
 /* ============================ 編輯器視窗 ============================
