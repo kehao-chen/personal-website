@@ -18,6 +18,42 @@ test('每一頁的品牌後面都跟著一個會閃的游標', async ({ page }) 
   }
 });
 
+/**
+ * 游標曾經是 1em 高再用負的 vertical-align 往下推，結果方塊上下各多出約 1.5px，
+ * 看起來像浮在字旁邊而不是跟字站在同一條線上。這裡把「下緣坐在基線、上緣齊
+ * cap height」釘死。
+ *
+ * 基線用一個臨時的空 inline-block 探針量：空的 inline-block 以下緣當基線，
+ * 這是與游標本身的樣式無關的獨立參照。cap height 則從 canvas 的
+ * actualBoundingBoxAscent 取——品牌是全大寫，那個值就是大寫字母的實際墨高。
+ */
+test('游標下緣坐在文字基線上，上緣齊大寫字高', async ({ page }) => {
+  await page.goto('/');
+
+  const m = await page.evaluate(() => {
+    const brand = document.querySelector('.site-nav .brand') as HTMLElement;
+    const caret = document.querySelector('.brand-caret') as HTMLElement;
+
+    const probe = document.createElement('span');
+    probe.style.cssText = 'display:inline-block;width:1px;height:10px';
+    brand.appendChild(probe);
+    const baseline = probe.getBoundingClientRect().bottom;
+    probe.remove();
+
+    const cs = getComputedStyle(brand);
+    const ctx = document.createElement('canvas').getContext('2d')!;
+    ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const capHeight = ctx.measureText(brand.textContent ?? '').actualBoundingBoxAscent;
+
+    const box = caret.getBoundingClientRect();
+    return { baseline, capHeight, top: box.top, bottom: box.bottom, height: box.height };
+  });
+
+  // 半個 CSS 像素的容差：夠緊，抓得到 1px 以上的偏移；夠鬆，不會被次像素捨入誤傷
+  expect(Math.abs(m.bottom - m.baseline), '游標下緣沒有坐在基線上').toBeLessThan(0.5);
+  expect(Math.abs(m.height - m.capHeight), '游標高度不等於大寫字高').toBeLessThan(0.5);
+});
+
 test('游標不進無障礙樹，品牌連結的名稱維持乾淨', async ({ page }) => {
   await page.goto('/');
   const brand = page.locator('.site-nav .brand');

@@ -74,10 +74,14 @@ a { color: var(--accent); }
 .brand-caret {
   display: inline-block;
   width: 0.5em;
-  height: 1em;
+  /* 高度取字型的 cap height（實測 8.31px ÷ 11.2px ≈ 0.74em）。品牌是全大寫，
+     游標與字母等高才對得齊；1em 的方塊會上下各多出約 1.5px，看起來就是浮著的。
+
+     不設 vertical-align：空的 inline-block 以自己的下緣當基線，維持預設值就
+     剛好坐在文字基線上。 */
+  height: 0.74em;
   /* 品牌本身有 0.22em 字距，這裡只補一點點，游標才貼著最後一個字母 */
   margin-left: 0.08em;
-  vertical-align: -0.14em;
   background: var(--accent);
   animation: brand-caret 1.06s linear infinite;
 }
