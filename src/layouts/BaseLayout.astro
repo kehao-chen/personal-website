@@ -32,7 +32,7 @@ const alternates = alternateHreflang(path, availableLocales);
 const htmlLang = bcp47(locale);
 ---
 
-<html lang={htmlLang} class:list={[{ 'page-home': current === 'home' }]}>
+<html lang={htmlLang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -57,12 +57,7 @@ const htmlLang = bcp47(locale);
       (function () {
         var mark = function () { document.documentElement.classList.add('js'); };
         mark();
-        document.addEventListener('astro:after-swap', function () {
-          mark();
-          if (document.querySelector('.layout-front')) {
-            window.scrollTo(0, 0);
-          }
-        });
+        document.addEventListener('astro:after-swap', mark);
       })();
     </script>
     {sequence && (

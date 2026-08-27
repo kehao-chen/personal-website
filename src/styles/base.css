@@ -51,16 +51,6 @@ a { color: var(--accent); }
   border: 0;
 }
 
-/* 首頁為全螢幕 Hero / 桌面環境，禁止任何捲動與出現 Scrollbar */
-html.page-home,
-html.page-home body,
-html:has(.layout-front),
-body:has(.layout-front) {
-  height: 100%;
-  height: 100dvh;
-  overflow: hidden;
-}
-
 /* 抖色 canvas 與故障分層的容器，跨頁保留 */
 #fx {
   position: fixed;
@@ -70,12 +60,6 @@ body:has(.layout-front) {
   overflow: hidden;
 }
 #fx canvas { display: block; width: 100%; height: 100%; }
-#fx-layers {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
 
 /* 主要內容永遠疊在 canvas 之上 */
 .page {
@@ -421,11 +405,13 @@ html.js .desktop:not([data-open]) .vim {
   margin: 0 0 1.6rem;
   font-size: 0.84rem;
 }
+/* 不設 white-space: nowrap。這條規則吃的是未來每一張 markdown 表格，
+   文字型欄位會被迫只能橫捲，明明折行就好。真的塞不下的寬表格由上面的
+   overflow-x: auto 接住。 */
 .prose th, .prose td {
   padding: 0.55rem 0.75rem;
   text-align: left;
   border-bottom: 1px solid var(--line);
-  white-space: nowrap;
 }
 .prose th {
   font-family: var(--font-mono);
@@ -507,11 +493,20 @@ html.js .desktop:not([data-open]) .vim {
   color: var(--muted);
 }
 /* ============================== 版面 ============================== */
+/* 首頁是滿版的 hero／桌面環境，不該出現捲軸。這件事在這裡就結束了——版面元素
+   自己不長高，文件自然就沒有可捲的高度，不需要再去鎖 html/body 的 overflow。
+
+   （鎖 html/body 那條規則測起來完全沒有作用，卻連帶把 404 一起鎖死：它的
+   class 是從導覽高亮用的 `current === 'home'` 推導的，而 404 也是
+   current="home"。一個真的需要捲動的閱讀版面因此讀不完——實測 320×400 少
+   26px，400% 縮放下少 170px，是 WCAG 1.4.10 的失敗案例。）
+
+   不加 min-height: 100vh——min 會贏過 height，把下面那行 dvh 的退路整個抵銷掉；
+   iOS Safari 網址列展開時 100vh > 100dvh，元素就會比視窗還高。 */
 .layout-front {
   position: relative;
   height: 100vh;
   height: 100dvh;
-  min-height: 100vh;
   overflow: hidden;
 }
 .layout-front .vim { width: min(580px, 54vw); }
@@ -651,6 +646,8 @@ html.seq-pending::after {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* 分層是整棵 main.page 的複製品，故障期間會被位移；裁在容器邊界內 */
+  overflow: hidden;
 }
 .fx-layer {
   position: absolute;

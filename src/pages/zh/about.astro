@@ -2,6 +2,7 @@
 import FrontLayout from '../../layouts/FrontLayout.astro';
 import TerminalWindow from '../../components/TerminalWindow.astro';
 import SiteBackdrop from '../../components/SiteBackdrop.astro';
+import CertTable from '../../components/CertTable.astro';
 ---
 <FrontLayout
   locale="zh"
@@ -57,42 +58,7 @@ import SiteBackdrop from '../../components/SiteBackdrop.astro';
       </ul>
 
       <h2>證照</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>證照</th>
-            <th>發證機構</th>
-            <th>驗證</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Azure Solutions Architect Expert</td>
-            <td>Microsoft</td>
-            <td><a href="https://learn.microsoft.com/api/credentials/share/en-us/kehao-chen/5C1C6D2DCE6C5DAE?sharingId=339B6985F6579064" target="_blank" rel="noopener noreferrer">verify</a></td>
-          </tr>
-          <tr>
-            <td>DevOps Engineer Expert</td>
-            <td>Microsoft</td>
-            <td><a href="https://learn.microsoft.com/api/credentials/share/en-us/kehao-chen/88780FEC56298A7D?sharingId=339B6985F6579064" target="_blank" rel="noopener noreferrer">verify</a></td>
-          </tr>
-          <tr>
-            <td>Azure Administrator Associate</td>
-            <td>Microsoft</td>
-            <td><a href="https://learn.microsoft.com/api/credentials/share/en-us/kehao-chen/AA2D84683A352AC?sharingId=339B6985F6579064" target="_blank" rel="noopener noreferrer">verify</a></td>
-          </tr>
-          <tr>
-            <td>Azure AI Engineer Associate</td>
-            <td>Microsoft</td>
-            <td><a href="https://learn.microsoft.com/api/credentials/share/en-us/kehao-chen/A571699F719CAB4C?sharingId=339B6985F6579064" target="_blank" rel="noopener noreferrer">verify</a></td>
-          </tr>
-          <tr>
-            <td>CKA: Certified Kubernetes Administrator</td>
-            <td>The Linux Foundation</td>
-            <td><a href="https://www.credly.com/badges/cb96f42a-de8f-4948-b6a0-61365bdeff4e/linked_in_profile" target="_blank" rel="noopener noreferrer">verify</a></td>
-          </tr>
-        </tbody>
-      </table>
+      <CertTable locale="zh" />
 
       <h2>出沒地點</h2>
       <p>

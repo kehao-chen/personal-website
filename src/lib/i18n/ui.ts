@@ -18,6 +18,10 @@ const STRINGS = {
     'error.404.back': 'RETURN TO ROOT',
     'profile.open': 'Open ~/.profile',
     'profile.close': 'Close ~/.profile',
+    'cert.name': 'Certification',
+    'cert.issuer': 'Issuer',
+    'cert.verification': 'Verification',
+    'cert.verify': 'verify',
   },
   zh: {
     'nav.skipToContent': '跳至主要內容',
@@ -36,6 +40,10 @@ const STRINGS = {
     'error.404.back': '回到根目錄',
     'profile.open': '開啟 ~/.profile',
     'profile.close': '關閉 ~/.profile',
+    'cert.name': '證照',
+    'cert.issuer': '發證機構',
+    'cert.verification': '驗證',
+    'cert.verify': '驗證',
   },
 } as const;
 

@@ -1,0 +1,39 @@
+---
+import type { Locale } from '../lib/posts';
+import { CERTIFICATIONS } from '../lib/certifications';
+import { t } from '../lib/i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+---
+
+<table>
+  <thead>
+    <tr>
+      <th>{t(locale, 'cert.name')}</th>
+      <th>{t(locale, 'cert.issuer')}</th>
+      <th>{t(locale, 'cert.verification')}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {CERTIFICATIONS.map((cert) => (
+      <tr>
+        <td>{cert.name}</td>
+        <td>{cert.issuer}</td>
+        <td>
+          {/* 看得見的字維持短的「驗證」，但無障礙名稱要帶證照名：螢幕閱讀器
+              的連結清單是把連結抽離表格列來唸的，五個一模一樣的「驗證」在那
+              個清單裡分不出誰是誰。 */}
+          <a
+            href={cert.href}
+            aria-label={`${t(locale, 'cert.verify')} ${cert.name}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >{t(locale, 'cert.verify')}</a>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
