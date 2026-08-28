@@ -1,0 +1,157 @@
+# 一條 workflow 把「驗證」與「上線」串起來：測試不全綠就不會有部署。
+#
+# 為什麼不用 Cloudflare Pages 的 Git 整合？happyhacking-ninja 這個 Pages
+# 專案是以 direct upload 建立的，Cloudflare 不支援把既有的 direct-upload
+# 專案改接 Git。所以由 Actions 建置、再用 wrangler 上傳產物。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# 同一個分支連續推送時，只留最後一次；已經沒人要看的 CI 不值得佔 runner。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: 型別 / 單元 / E2E
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # playwright.config.ts 只註冊 chromium，不必把三個瀏覽器都裝下來
+      - run: npx playwright install --with-deps chromium
+
+      - name: astro check
+        run: npm run check
+
+      - name: 單元測試
+        run: npm run test
+
+      # webServer 自己會跑 `npm run build && npm run preview`，這裡不需要先建置
+      - name: E2E
+        run: npm run test:e2e
+
+      - name: 上傳失敗報告
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  lighthouse:
+    name: Lighthouse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # lighthouserc.cjs 的 startServerCommand 是 `npm run preview`，
+      # astro preview 只是把 dist/ 端出來，不會自己建置
+      - run: npm run build
+
+      - name: lhci autorun
+        run: npm run test:lighthouse
+
+      - name: 上傳 Lighthouse 報告
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+          retention-days: 7
+
+  deploy:
+    name: 部署 Cloudflare Pages
+    needs: [test, lighthouse]
+    # fork 來的 PR 拿不到 secrets，讓它安靜跳過而不是紅一片
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # 只為了把 preview 網址貼回 PR
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      # Pages 用分支名決定這是 production 還是 preview：專案的 production
+      # branch 是 main，其餘一律進 preview 環境拿到獨立網址。
+      # 走 env 而不是直接內插，分支名是使用者可控字串。
+      - name: 決定部署分支
+        id: branch
+        env:
+          BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+        run: echo "name=$BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: wrangler pages deploy
+        id: deploy
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # 釘住版本：wrangler 的 pages 子命令輸出格式會影響 deployment-url 的擷取
+          wranglerVersion: "4.127.0"
+          command: pages deploy dist --project-name=happyhacking-ninja --branch=${{ steps.branch.outputs.name }}
+
+      - name: 在 PR 留下 preview 網址
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v9
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+        with:
+          script: |
+            const marker = '<!-- cf-pages-preview -->';
+            const body = [
+              marker,
+              '**Cloudflare Pages preview**',
+              '',
+              `| 項目 | 值 |`,
+              `| --- | --- |`,
+              `| 網址 | ${process.env.DEPLOY_URL} |`,
+              `| commit | \`${context.payload.pull_request.head.sha.slice(0, 7)}\` |`,
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existing = comments.find((c) => c.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });
+            }
