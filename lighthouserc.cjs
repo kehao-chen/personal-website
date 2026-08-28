@@ -5,6 +5,17 @@
  */
 const GREEN = 0.9;
 
+/**
+ * CPU 節流倍率。
+ *
+ * GitHub runner 是 2 vCPU 的共用機器，本身就比開發機慢好幾倍；在上面再套
+ * 行動模擬預設的 4× 節流，等於節流兩次。實測（2026-08-28，run 33148261490）
+ * TBT 從本機的 193 ms 變成 4687–13251 ms、performance 0.70——量到的不是這個
+ * 站，是 runner 的排隊延遲。CI 上把倍率設回 1，其餘（網路節流、行動視窗、
+ * 三次取中位數）完全不動。
+ */
+const cpuSlowdownMultiplier = process.env.CI ? 1 : 4;
+
 /** 四個類別一律要綠 */
 const categories = {
   'categories:performance': ['error', { minScore: GREEN }],
@@ -62,6 +73,7 @@ module.exports = {
         // 預設即為行動裝置模擬，明寫出來避免日後被誤改
         preset: 'desktop' === process.env.LHCI_PRESET ? 'desktop' : undefined,
         skipAudits: ['uses-http2'], // 本機 preview 沒有 HTTP/2，正式環境由 Cloudflare 提供
+        throttling: { cpuSlowdownMultiplier },
       },
     },
     assert: {

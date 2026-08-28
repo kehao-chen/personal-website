@@ -81,6 +81,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: lighthouse-report
+          include-hidden-files: true # .lighthouseci 是隱藏目錄，v4 之後預設會被略過
           path: .lighthouseci/
           retention-days: 7
 
