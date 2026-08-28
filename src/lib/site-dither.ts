@@ -237,6 +237,8 @@ async function apply(): Promise<void> {
   }
 
   live.setReading(false);
+  // 撥球只在首頁：其餘路由的內容會捲動，觸控拖拽會跟捲動打架
+  live.setSpinInteractive(mode === 'home');
   root().classList.add('gl-active');
 
   if (mode === 'backdrop') {
