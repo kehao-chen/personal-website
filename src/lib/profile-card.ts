@@ -41,7 +41,7 @@ export const PROFILE_CARD: Record<Locale, ProfileCard> = {
     who: 'INTJ-O-H · thoroughly average 1x engineer',
     now: 'Making LLM agents production-grade — deployable, auditable, debuggable',
     stack: 'Azure · Kubernetes · Cloud-native · Agentic coding',
-    where: 'Taipei · DevOpsDays Taipei / JCConf regular',
+    where: 'Taipei · never miss DevOpsDays Taipei or JCConf',
     motto: 'Anxiety is just compute starvation.',
     links: [
       { label: 'GITHUB', href: 'https://github.com/kehao-chen' },
@@ -53,7 +53,7 @@ export const PROFILE_CARD: Record<Locale, ProfileCard> = {
     who: 'INTJ-O-H · 自我認證的平庸 1x 軟體工程師',
     now: '把 LLM agent 做成能上線、能稽核、出事查得到的系統',
     stack: 'Azure · Kubernetes · Cloud-native · Agentic coding',
-    where: '台北 · DevOpsDays Taipei / JCConf 常客',
+    where: '台北 · DevOpsDays Taipei / JCConf 每年一定到',
     motto: '焦慮來自於算力不足',
     links: [
       { label: 'GITHUB', href: 'https://github.com/kehao-chen' },
