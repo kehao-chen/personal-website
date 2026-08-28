@@ -32,8 +32,9 @@ test('CSS counter 規則產生邏輯行號，不進無障礙樹也不進文字�
   await page.goto('/');
 
   // 邏輯行數與內容驗證
+  // 五個欄位（WHO / NOW / STACK / WHERE / LINKS）加最後那行 motto
   const lines = page.locator('.vim-line');
-  await expect(lines).toHaveCount(3);
+  await expect(lines).toHaveCount(6);
 
   // 行號不進文字內容：textContent 不含行號數字
   const bodyText = await page.locator('.vim-body').textContent();

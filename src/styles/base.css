@@ -339,6 +339,26 @@ html.js .desktop:not([data-open]) .vim {
   text-align: right;
   color: var(--muted);
 }
+/* .profile 的欄位列。dl 只是語意容器，排版全在 .vim-field 上——它同時是
+   .vim-line，所以吃得到行號計數器，一列一個號碼。 */
+.vim-fields { margin: 0; }
+.vim-field {
+  display: flex;
+  gap: 0.9rem;
+}
+.vim-field dt {
+  flex: 0 0 4.4rem;
+  color: var(--muted);
+}
+.vim-field dd {
+  /* min-width: 0 讓長值在 flex 項目裡折得下去，而不是把整列撐寬 */
+  min-width: 0;
+  margin: 0;
+}
+.vim-motto { margin: 0; }
+/* 沒有窄畫面版本：.desktop 在 640px 以下整個 display:none（見下方斷點），
+   這個視窗在手機上根本不存在。曾經加過一組 <=640px 的堆疊規則，是死碼。 */
+
 .vim-line a {
   color: var(--accent);
   text-decoration: underline;

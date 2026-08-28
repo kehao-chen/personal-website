@@ -86,3 +86,48 @@ test('窄畫面的證照名稱會折行，不是整欄硬撐', async ({ page }) 
   }));
   expect(doc.sw).toBeLessThanOrEqual(doc.cw);
 });
+
+/**
+ * 資訊架構：小標的順序就是這一頁的敘事。
+ * 「現在在做什麼」與「長期能力」分開兩個小標——它們的更新週期差很多，綁在
+ * 同一個標題底下的結果是兩邊都不會被更新。
+ */
+const HEADINGS = {
+  '/about/': ['About', 'Now', 'What I do', "A few things I'm stubborn about", 'Certifications', 'Elsewhere'],
+  '/zh/about/': ['關於', '近況', '我做什麼', '幾條偏執', '證照', '在其他地方'],
+} as const;
+
+for (const [path, expected] of Object.entries(HEADINGS)) {
+  test(`${path} 的小標順序就是它的敘事`, async ({ page }) => {
+    await page.goto(path);
+    const headings = await page.locator('.prose h1, .prose h2').allTextContents();
+    expect(headings.map((h) => h.trim())).toEqual([...expected]);
+  });
+}
+
+test('兩個語言的 about 是同一個資訊架構', async ({ page }) => {
+  const count = async (path: string) => {
+    await page.goto(path);
+    return page.locator('.prose h1, .prose h2').count();
+  };
+  expect(await count('/zh/about/')).toBe(await count('/about/'));
+});
+
+test('近況段落標了更新月份——沒更新就看得出來', async ({ page }) => {
+  for (const path of ['/about/', '/zh/about/']) {
+    await page.goto(path);
+    const now = page.locator('.prose [data-now-updated]');
+    await expect(now, `${path} 的近況段沒有更新月份`).toHaveCount(1);
+    expect(await now.getAttribute('datetime'), `${path} 的更新月份格式不對`)
+      .toMatch(/^\d{4}-\d{2}$/);
+  }
+});
+
+test('Elsewhere 段落把對外連結寫進正文，不是只躲在狀態列', async ({ page }) => {
+  await page.goto('/about/');
+  const links = page.locator('.prose h2:text-is("Elsewhere") ~ p a[href^="https://"]');
+  expect(await links.count(), '正文裡沒有對外連結').toBeGreaterThan(0);
+  for (const rel of await links.evaluateAll((els) => els.map((e) => e.getAttribute('rel') ?? ''))) {
+    expect(rel, '外部連結少了 noopener').toContain('noopener');
+  }
+});

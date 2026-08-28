@@ -1,6 +1,7 @@
 ---
 import FrontLayout from '../../layouts/FrontLayout.astro';
 import VimWindow from '../../components/VimWindow.astro';
+import ProfileCard from '../../components/ProfileCard.astro';
 import DesktopIcon from '../../components/DesktopIcon.astro';
 import Wordmark from '../../components/Wordmark.astro';
 import HeroSequence from '../../components/HeroSequence.astro';
@@ -20,9 +21,7 @@ import { t } from '../../lib/i18n/ui';
     <div class="desktop">
       <DesktopIcon label=".profile" action={t('zh', 'profile.open')} controls="profile-window" />
       <VimWindow path="~/.profile" id="profile-window" closeLabel={t('zh', 'profile.close')}>
-        <p class="vim-line">INTJ-O-H。自我認證的平庸 1x 軟體工程師。</p>
-        <p class="vim-line">在雲端搬磚、在 K8s 打滾。焦慮來自於算力不足。</p>
-        <p class="vim-line soft">STATUS <span class="hot">ONLINE</span> · TAIPEI · GITHUB <a href="https://github.com/kehao-chen" target="_blank" rel="noopener noreferrer">@kehao-chen</a></p>
+        <ProfileCard locale="zh" />
       </VimWindow>
     </div>
   </main>
