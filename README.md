@@ -15,6 +15,7 @@ npm run dev        # http://localhost:4321
 npm test           # 單元測試（純函式與配色守門）
 npm run check      # 型別檢查
 npm run test:e2e   # 端對端護欄
+npm run test:lighthouse   # 效能 / a11y / SEO 預算（本機為 4× CPU 節流）
 ```
 
 ## 寫文章
@@ -44,27 +45,50 @@ translationKey: "optional-shared-key"   # 有中英兩版時填相同的值
 配色 token 定義於 `src/styles/tokens.css`，值來自作者持有授權的商業配色方案；
 此 repo 只定義語意化 token，不散布任何主題檔。
 
+## CI/CD
+
+[![CI](https://github.com/kehao-chen/personal-website/actions/workflows/ci.yml/badge.svg)](https://github.com/kehao-chen/personal-website/actions/workflows/ci.yml)
+
+定義在 `.github/workflows/ci.yml`。
+
+| Job | 內容 |
+|---|---|
+| 型別 / 單元 / E2E | `astro check`、`vitest`、`playwright`（只裝 chromium） |
+| Lighthouse | `lhci autorun`，6 個 URL × 3 runs |
+| 部署 Cloudflare Pages | 前兩者全綠才跑 |
+
+- push `main` → production
+- 同一個 repo 的 PR → 以分支名進 preview 環境，網址回貼到 PR（同一則留言就地更新）
+- fork 來的 PR 拿不到 secrets，deploy job 會安靜跳過
+
+需要兩個 repo secret：`CLOUDFLARE_API_TOKEN`（權限只需 Account → Cloudflare
+Pages → Edit）與 `CLOUDFLARE_ACCOUNT_ID`。
+
+> 用 `gh secret set` 設定時要在**真正的終端機**裡跑。沒有 TTY 的環境（例如某些
+> 工具的內嵌 shell）它會直接讀 stdin，讀到 EOF 就寫入空字串，Actions 那邊看起來
+> 是 secret 存在、實際拿到空值，deploy 會以「CLOUDFLARE_API_TOKEN not set」失敗。
+
+Lighthouse 在 CI 上不節流 CPU，門檻的意義與本機不同——原因與代價見
+`lighthouserc.cjs` 的註解與 `docs/lighthouse-baseline.md`。**CI 綠不等於效能沒退**，
+動到 three.js 或首頁序列之後請在本機跑一次 `npm run test:lighthouse`。
+
 ## 部署
 
-Cloudflare Pages 專案 `happyhacking-ninja`。此 repo 目前沒有 remote，專案也
-沒有接 Git 整合，所以是手動部署，每次要上線就手動跑一次：
+Cloudflare Pages 專案 `happyhacking-ninja`，以 direct upload 建立。Cloudflare
+不支援把既有的 direct-upload 專案改接 Git 整合，所以是由 Actions 建置後用
+wrangler 上傳，而不是 Pages 自己拉 repo。
+
+- Production branch：`main`
+- Build output directory：`dist`
+- Node version：見 `.nvmrc`
+- 對外網址：https://happyhacking.ninja（`www` 以 301 導到 apex）
+
+需要手動出手時：
 
 ```bash
 npm run build
-npx wrangler pages deploy dist --project-name=happyhacking-ninja
+npx wrangler pages deploy dist --project-name=happyhacking-ninja --branch=main
 ```
 
-- Build command：`npm run build`
-- Build output directory：`dist`
-- Node version：22（`NODE_VERSION` 環境變數）
-- Production branch：`main`
-- 目前對外服務網址：https://happyhacking-ninja.pages.dev
-
-**自訂網域尚未接上。** `happyhacking.ninja` 與 `www.happyhacking.ninja`
-目前正在服務一個既有的 Hugo 網站，接上這個新專案會立刻蓋掉那個網站。
-確認舊站已處理好之後，再執行：
-
-```bash
-npx wrangler pages domain add happyhacking-ninja happyhacking.ninja
-npx wrangler pages domain add happyhacking-ninja www.happyhacking.ninja
-```
+舊 Hugo 站的 `/categories/`、`/tags/`、`/authors/`、`/series/` 不做轉導，直接
+404——刻意的 breaking change。
