@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Frame } from '../sequence/timeline';
 import { FRAGMENT_SHADER, VERTEX_SHADER, UNIFORM_NAMES } from './shader';
 import { createScene, type DitherScene } from './scene';
+import { createSpinController } from './pointer-spin';
 import { FRAMING } from './framing';
 
 export { FRAGMENT_SHADER, VERTEX_SHADER, UNIFORM_NAMES };
@@ -21,6 +22,10 @@ export interface DitherHandle {
   burst(): void;
   /** 閱讀模式：完全停止算繪，畫面留在純底色 */
   setReading(reading: boolean): void;
+  /** 開放指標撥動線框球。只有首頁開——其他路由的球只是背景 */
+  setSpinInteractive(on: boolean): void;
+  /** 線框球目前的角度（rad）。角度活在 WebGL 裡，這是唯一看得到它的地方 */
+  readonly spin: { x: number; y: number };
   destroy(): void;
 }
 
@@ -43,6 +48,8 @@ function createInertHandle(): DitherHandle {
     setFrame() {},
     burst() {},
     setReading() {},
+    setSpinInteractive() {},
+    spin: { x: 0, y: 0 },
     destroy() {},
   };
 }
@@ -108,6 +115,9 @@ export function createDither(
     let reading = false;
     let running = true;
     let rafId = 0;
+
+    const spinner = createSpinController();
+    let spin = { x: 0, y: 0 };
 
     let burstStart = -Infinity;
     let nextFlickerAt = performance.now() + FLICKER_INTERVAL_MS;
@@ -182,8 +192,9 @@ export function createDither(
       // 線框本來就只有一像素寬，降取樣還會再攤薄一次，對半打折就撐不過量化
       shellMaterial.opacity = reading ? 0 : frame.scene * 0.7;
 
-      activeWorld.shell.rotation.x = seconds * 0.09;
-      activeWorld.shell.rotation.y = seconds * 0.14;
+      spin = spinner.sample(now);
+      activeWorld.shell.rotation.x = spin.x;
+      activeWorld.shell.rotation.y = spin.y;
       activeWorld.camera.position.x = Math.sin(seconds * 0.22) * FRAMING.driftX;
       activeWorld.camera.position.y = FRAMING.baseY + Math.sin(seconds * 0.3) * FRAMING.driftY;
       activeWorld.camera.lookAt(0, FRAMING.baseY, 0);
@@ -198,7 +209,9 @@ export function createDither(
 
     return {
       active: true,
+      get spin() { return spin; },
       setFrame(next) { frame = next; },
+      setSpinInteractive(on) { spinner.setEnabled(on); },
       burst() { burstStart = performance.now(); },
       setReading(next) {
         // 只是停止算繪的話，最後一幀會留在畫布上凍住（換頁進文章時就是文字底下
@@ -214,6 +227,7 @@ export function createDither(
       },
       destroy() {
         running = false;
+        spinner.destroy();
         cancelAnimationFrame(rafId);
         activeWorld.dispose();
         activePostQuad.geometry.dispose();
