@@ -131,3 +131,25 @@ test('Elsewhere 段落把對外連結寫進正文，不是只躲在狀態列', a
     expect(rel, '外部連結少了 noopener').toContain('noopener');
   }
 });
+
+/**
+ * 引言區塊靠左邊那條線界定範圍，所以上下留白不對稱會直接被看見。
+ * `.prose p` 的 margin-bottom 若沒有在最後一個子元素上歸零，線就會比文字
+ * 多拖一段——實測上方 2.4px、下方 24.0px。
+ */
+test('引言區塊的上下留白對稱', async ({ page }) => {
+  for (const path of ['/about/', '/zh/about/']) {
+    await page.goto(path);
+    const gaps = await page.locator('.prose blockquote').first().evaluate((bq) => {
+      const box = bq.getBoundingClientRect();
+      return {
+        above: bq.firstElementChild!.getBoundingClientRect().top - box.top,
+        below: box.bottom - bq.lastElementChild!.getBoundingClientRect().bottom,
+      };
+    });
+    expect(
+      Math.abs(gaps.below - gaps.above),
+      `${path} 引言下方比上方多 ${(gaps.below - gaps.above).toFixed(1)}px`,
+    ).toBeLessThan(2);
+  }
+});

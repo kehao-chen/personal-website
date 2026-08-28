@@ -449,6 +449,9 @@ html.js .desktop:not([data-open]) .vim {
   border-left: 2px solid var(--line);
   color: var(--muted);
 }
+/* 左邊那條線界定了引言的範圍，上下不對稱會直接被看見。內文段落的
+   margin-bottom 若留著，線會比文字多拖 21.6px。 */
+.prose blockquote > :last-child { margin-bottom: 0; }
 .prose :not(pre) > code {
   font-family: var(--font-mono);
   font-size: 0.88em;
