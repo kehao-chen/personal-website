@@ -1,0 +1,35 @@
+---
+import type { Locale } from '../lib/i18n/locales';
+import { PROFILE_CARD, PROFILE_FIELDS } from '../lib/profile-card';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const card = PROFILE_CARD[locale];
+---
+
+{/* dt/dd 包在 div 裡（HTML5 允許）而不是裸放在 dl 下：一列要是一個
+    `.vim-line`，才吃得到 .vim-body 的行號計數器，維持編輯器的樣子。 */}
+<dl class="vim-fields">
+  {PROFILE_FIELDS.map((field) => (
+    <div class="vim-line vim-field">
+      <dt>{field.toUpperCase()}</dt>
+      <dd>{card[field]}</dd>
+    </div>
+  ))}
+  <div class="vim-line vim-field">
+    <dt>LINKS</dt>
+    <dd>
+      {card.links.map((link, index) => (
+        <>
+          {index > 0 && <span aria-hidden="true"> · </span>}
+          <a href={link.href} target="_blank" rel="noopener noreferrer">{link.label}</a>
+        </>
+      ))}
+    </dd>
+  </div>
+</dl>
+
+{/* 真的檔案結尾都會有的那一行註解 */}
+<p class="vim-line soft vim-motto">— {card.motto}</p>
