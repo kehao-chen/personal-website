@@ -6,13 +6,19 @@
 const GREEN = 0.9;
 
 /**
- * CPU 節流倍率。
+ * CPU 節流倍率：本機 4×（Lighthouse 行動模擬預設），CI 1×。
  *
- * GitHub runner 是 2 vCPU 的共用機器，本身就比開發機慢好幾倍；在上面再套
- * 行動模擬預設的 4× 節流，等於節流兩次。實測（2026-08-28，run 33148261490）
- * TBT 從本機的 193 ms 變成 4687–13251 ms、performance 0.70——量到的不是這個
- * 站，是 runner 的排隊延遲。CI 上把倍率設回 1，其餘（網路節流、行動視窗、
- * 三次取中位數）完全不動。
+ * 不是因為 runner 慢。實測 benchmarkIndex，GitHub runner 2123–2436、本機
+ * 2388，單核效能是同一個級別。壞掉的是「4× CDP 節流 + 2 vCPU + WebGL」這個
+ * 組合：CDP 的節流靠讓 renderer thread 空轉實作，開發機有多餘的核心吸收
+ * compositor / raster，2 vCPU 的 VM 沒有，於是 three.js 的頁面 TBT 從本機的
+ * 193 ms 炸到 4687–13251 ms（run 33148261490），三次之間還差到三倍。零 JS 的
+ * 兩個文章頁在同一輪 4× 下全過——瓶頸只在這個組合，不在站本身。
+ *
+ * 代價要講清楚：CI 不節流 CPU，TBT 在 CI 就是個弱訊號（實測 0–107 ms，離
+ * 300 ms 門檻很遠，擋不住中等程度的退步）。4× 的效能契約留在本機
+ * `npm run test:lighthouse` 與 docs/lighthouse-baseline.md。CI 擋得住的是
+ * a11y / best-practices / SEO 與網路節流下的 LCP、FCP、CLS——這些不受影響。
  */
 const cpuSlowdownMultiplier = process.env.CI ? 1 : 4;
 
