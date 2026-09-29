@@ -1,20 +1,21 @@
 import { test, expect } from '@playwright/test';
+import { CERTIFICATIONS } from '../../src/lib/certifications';
 
 /**
  * 證照的驗證連結看得見的字都一樣（verify／驗證），螢幕閱讀器的連結清單會把
- * 連結抽離表格列來唸——五個一模一樣的名稱在那個清單裡分不出誰是誰，所以要靠
+ * 連結抽離表格列來唸——一排一模一樣的名稱在那個清單裡分不出誰是誰，所以要靠
  * aria-label 帶上證照名。
  */
 for (const [name, path, verb] of [['英文', '/about/', 'verify'], ['中文', '/zh/about/', '驗證']] as const) {
   test(`${name}關於頁的驗證連結各自有可辨識的無障礙名稱`, async ({ page }) => {
     await page.goto(path);
     const links = page.locator('.prose table tbody a');
-    await expect(links).toHaveCount(5);
+    await expect(links).toHaveCount(CERTIFICATIONS.length);
 
     const names = await links.evaluateAll((els) =>
       els.map((el) => el.getAttribute('aria-label') ?? el.textContent?.trim() ?? ''),
     );
-    expect(new Set(names).size, `五個連結的名稱撞在一起：${names.join(' / ')}`).toBe(5);
+    expect(new Set(names).size, `連結的名稱撞在一起：${names.join(' / ')}`).toBe(CERTIFICATIONS.length);
     for (const n of names) expect(n.startsWith(`${verb} `), `「${n}」沒有帶上證照名`).toBe(true);
 
     // 看得見的字維持短的動詞
@@ -27,7 +28,7 @@ for (const [name, path, verb] of [['英文', '/about/', 'verify'], ['中文', '/
       (els) => els.map((el) => el.getAttribute('href')),
     );
     expect(hrefs.every((h) => h?.startsWith('https://'))).toBe(true);
-    expect(new Set(hrefs).size, '驗證連結有重複').toBe(5);
+    expect(new Set(hrefs).size, '驗證連結有重複').toBe(CERTIFICATIONS.length);
   });
 }
 
@@ -62,7 +63,7 @@ test('關於頁的狀態列連結指向正確的來源，外部連結才開新�
 
 /**
  * 表格的儲存格不再被 white-space: nowrap 綁住。窄畫面上證照名（最長的
- * 「CKA: Certified Kubernetes Administrator」）該折成多行，而不是把整張表
+ * 「KCSA: Kubernetes and Cloud Native Security Associate」）該折成多行，而不是把整張表
  * 撐成一條只能橫捲的長條。剩下真的塞不下的部分才交給 overflow-x。
  */
 test('窄畫面的證照名稱會折行，不是整欄硬撐', async ({ page }) => {

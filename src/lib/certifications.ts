@@ -36,6 +36,26 @@ export const CERTIFICATIONS: readonly Certification[] = [
   {
     name: 'CKA: Certified Kubernetes Administrator',
     issuer: 'The Linux Foundation',
-    href: 'https://www.credly.com/badges/cb96f42a-de8f-4948-b6a0-61365bdeff4e/linked_in_profile',
+    href: 'https://www.credly.com/badges/d2df9d12-06e8-4216-97f6-bb184164cdef',
+  },
+  {
+    name: 'CKAD: Certified Kubernetes Application Developer',
+    issuer: 'The Linux Foundation',
+    href: 'https://www.credly.com/badges/07d9c8c6-57a2-47bc-8514-05ef103d5175',
+  },
+  {
+    name: 'CKS: Certified Kubernetes Security Specialist',
+    issuer: 'The Linux Foundation',
+    href: 'https://www.credly.com/badges/e0da79fd-5973-4fb7-a009-3302ad0178eb',
+  },
+  {
+    name: 'KCNA: Kubernetes and Cloud Native Associate',
+    issuer: 'The Linux Foundation',
+    href: 'https://www.credly.com/badges/f505f069-d4ab-4cca-a29d-075a87bfa14c',
+  },
+  {
+    name: 'KCSA: Kubernetes and Cloud Native Security Associate',
+    issuer: 'The Linux Foundation',
+    href: 'https://www.credly.com/badges/f9f4647e-6416-40d8-bdb3-560250dd2c10',
   },
 ] as const;
