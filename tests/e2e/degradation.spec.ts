@@ -5,9 +5,9 @@ test.describe('關閉 JavaScript', () => {
   test.use({ javaScriptEnabled: false });
 
   test('文章內容完整可讀', async ({ page }) => {
-    await page.goto('/zh/writing/aks-lun-exhaustion/');
-    await expect(page.locator('h1')).toContainText('AKS 節點 LUN 用盡');
-    await expect(page.locator('.prose')).toContainText('kubectl');
+    await page.goto('/zh/writing/typeless-hyprland-terminal-paste/');
+    await expect(page.locator('h1')).toContainText('Typeless Linux 版');
+    await expect(page.locator('.prose')).toContainText('kitty');
   });
 
   test('導覽可用且指向正確路徑', async ({ page }) => {
@@ -25,8 +25,8 @@ test.describe('關閉 JavaScript', () => {
 
   test('文章索引列出文章', async ({ page }) => {
     await page.goto('/writing/');
-    // 目前英文有兩篇文章（見 navigation.spec.ts 的標籤篩選測試，同樣依賴這個數字）
-    await expect(page.locator('.post-row')).toHaveCount(2);
+    // 目前英文只有一篇文章（見 navigation.spec.ts 的標籤頁測試，同樣依賴這個數字）
+    await expect(page.locator('.post-row')).toHaveCount(1);
   });
 });
 

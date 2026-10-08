@@ -71,9 +71,9 @@ module.exports = {
         'http://localhost:4321/',
         'http://localhost:4321/about/',
         'http://localhost:4321/writing/',
-        'http://localhost:4321/writing/approval-orchestrator/',
+        'http://localhost:4321/writing/typeless-hyprland-terminal-paste/',
         'http://localhost:4321/zh/',
-        'http://localhost:4321/zh/writing/aks-lun-exhaustion/',
+        'http://localhost:4321/zh/writing/typeless-hyprland-terminal-paste/',
       ],
       settings: {
         // 預設即為行動裝置模擬，明寫出來避免日後被誤改

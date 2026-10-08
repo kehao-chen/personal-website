@@ -7,6 +7,7 @@ tags:
 - LINUX
 - HYPRLAND
 - WAYLAND
+translationKey: typeless-hyprland-terminal-paste
 ---
 
 我最近把主力開發環境換到 Omarchy，又剛好是 Typeless 的訂戶，它九月底才推出 Linux 版，想當然耳要裝來用。結果第一天就撞到兩個坑：語音輸入在 Chrome 正常，在 kitty 裡一個字都貼不出來；聽寫時那個小浮動視窗，換個 workspace 就不見了。坑踩完了，修法是兩條 Hyprland 設定，先給你。

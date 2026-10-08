@@ -46,7 +46,7 @@ test('門面路由之間換頁會觸發故障轉場', async ({ page }) => {
 });
 
 test('離開文章內頁換頁不會觸發故障轉場', async ({ page }) => {
-  await page.goto('/writing/approval-orchestrator/');
+  await page.goto('/writing/typeless-hyprland-terminal-paste/');
   await watchForFxLayer(page);
   await page.locator('a.brand').click();
 

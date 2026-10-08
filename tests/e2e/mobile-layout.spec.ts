@@ -18,9 +18,9 @@ test.use({
 const PAGES = [
   ['首頁', '/'],
   ['文章索引', '/writing/'],
-  ['文章內頁', '/writing/approval-orchestrator/'],
+  ['文章內頁', '/writing/typeless-hyprland-terminal-paste/'],
   ['中文首頁', '/zh/'],
-  ['中文文章', '/zh/writing/aks-lun-exhaustion/'],
+  ['中文文章', '/zh/writing/typeless-hyprland-terminal-paste/'],
   ['關於', '/about/'],
 ] as const;
 
@@ -101,7 +101,7 @@ test('窄畫面首頁不出現 .profile 桌面，只留 hero', async ({ page }) 
 });
 
 test('程式碼區塊自己捲動，不撐破頁面', async ({ page }) => {
-  await page.goto('/writing/approval-orchestrator/');
+  await page.goto('/writing/typeless-hyprland-terminal-paste/');
 
   const pre = page.locator('.prose pre').first();
   const box = await pre.boundingBox();

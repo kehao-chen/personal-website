@@ -34,24 +34,25 @@ for (const [from, label, to] of SAME_PAGE) {
 }
 
 /**
- * 手足 URL 不存在時的退路。英文文章沒有中文版，硬套同一條路徑會 404，
- * 所以退到中文的 /writing/——比丟回首頁更接近使用者原本在看的東西。
+ * 文章有翻譯時，換語系要落在翻譯本身，不是退到 /writing/。退路（沒有翻譯時退到
+ * 該語系的 /writing/）目前站上沒有文章能觸發，由 routing.test.ts 的
+ * localeSwitchTarget 單元測試蓋。
  */
-test('沒有中文版的英文文章，換語系退到中文的 /writing/', async ({ page }) => {
-  await page.goto('/writing/approval-orchestrator/');
+test('有中文版的英文文章，換語系會到中文版', async ({ page }) => {
+  await page.goto('/writing/typeless-hyprland-terminal-paste/');
   await lang(page).click();
-  await expect.poll(() => pathnameOf(page)).toBe('/zh/writing/');
+  await expect.poll(() => pathnameOf(page)).toBe('/zh/writing/typeless-hyprland-terminal-paste/');
 });
 
-test('沒有英文版的中文文章，換語系退到英文的 /writing/', async ({ page }) => {
-  await page.goto('/zh/writing/aks-lun-exhaustion/');
+test('有英文版的中文文章，換語系會到英文版', async ({ page }) => {
+  await page.goto('/zh/writing/typeless-hyprland-terminal-paste/');
   await lang(page).click();
-  await expect.poll(() => pathnameOf(page)).toBe('/writing/');
+  await expect.poll(() => pathnameOf(page)).toBe('/writing/typeless-hyprland-terminal-paste/');
 });
 
 test('換語系的連結不會落在 404', async ({ page }) => {
-  for (const from of ['/about/', '/writing/', '/writing/approval-orchestrator/',
-    '/writing/tag/architecture/', '/zh/writing/aks-lun-exhaustion/', '/zh/about/']) {
+  for (const from of ['/about/', '/writing/', '/writing/typeless-hyprland-terminal-paste/',
+    '/writing/tag/hyprland/', '/zh/writing/typeless-hyprland-terminal-paste/', '/zh/about/']) {
     await page.goto(from);
     const href = await lang(page).getAttribute('href');
     const res = await page.request.get(href!);

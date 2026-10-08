@@ -23,7 +23,7 @@ test('第一個 Tab 就是跳至主要內容，按下去焦點落在 main', asyn
 
 test('每一種版面都有可跳轉的目標', async ({ page }) => {
   // 首頁（layout-front）、索引（layout-list）、文章（layout-reading）、404 各一
-  for (const path of ['/', '/writing/', '/writing/approval-orchestrator/', '/zh/about/', '/404']) {
+  for (const path of ['/', '/writing/', '/writing/typeless-hyprland-terminal-paste/', '/zh/about/', '/404']) {
     await page.goto(path);
     const target = page.locator('#main-content');
     await expect(target, `${path} 少了跳轉目標`).toHaveCount(1);

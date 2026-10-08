@@ -90,7 +90,7 @@ test.describe('首頁不出捲軸', () => {
 test.describe('閱讀版面捲得到底', () => {
   test.use({ viewport: { width: 320, height: 400 } });
 
-  for (const [name, path] of [['404', '/404'], ['關於', '/about/'], ['文章', '/writing/approval-orchestrator/']] as const) {
+  for (const [name, path] of [['404', '/404'], ['關於', '/about/'], ['文章', '/writing/typeless-hyprland-terminal-paste/']] as const) {
     test(`${name} 的內容全部讀得到`, async ({ page }) => {
       await page.goto(path);
       const { maxScrollY } = await scrollState(page);

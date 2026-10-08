@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
  * specificity 壓過 `.prose pre`——擋得住這件事的只有對輸出的斷言。
  */
 test('程式碼區塊用站上的配色，而不是 Shiki 預設主題', async ({ page }) => {
-  await page.goto('/writing/approval-orchestrator/');
+  await page.goto('/writing/typeless-hyprland-terminal-paste/');
   const pre = page.locator('.prose pre').first();
   await expect(pre).toBeVisible();
 
